@@ -43,11 +43,18 @@ Contains
     allocate(att(n_at+nhe))
     call reading_coords
 
+
+
+
       mtot=0.0_rk
       do j=1,n_at+nhe
        call props_assignment(att(j)%nom,j)
        if (j.le.n_at) mtot=mtot+att(j)%ma
       enddo
+
+      Call results_file_opening
+
+
 
 
      return
@@ -234,6 +241,10 @@ Contains
            Select case (molname)
            case('hcl')
             n_at=2
+           case('hbr')
+            n_at=2
+           case('hf')
+            n_at=2
            case default
             write(*,*) 'molname ',trim(molname),' not recognized'
             stop
@@ -263,6 +274,41 @@ Contains
     return       
    end subroutine reading_coords
 
+
+      subroutine results_file_opening
+      character(len=100)::cnhe,estado,ncam,cicorrida,ctt,cdtau,nombre,cis,crfb
+      character(len=200) :: indir
+
+        select case(simtyp)
+        case (2) 
+          write(cnhe,*) nhe
+          write(estado,*) state
+          write(ncam,*) nw
+          write(ctt,*) nstps/10000
+          write(cdtau,*) int(dtau)
+          cnhe=adjustl(cnhe)
+          estado=adjustl(estado)
+          ncam=adjustl(ncam)
+          ctt=adjustl(ctt)
+          cdtau=adjustl(cdtau)
+          if (is) then
+           cis='is'
+          else
+           cis='nis'
+          endif
+          cis=adjustl(cis)
+
+         !File opening
+         nombre=trim(molname)//trim(estado)//'st'//&
+               &trim(ncam)//'w'//trim(cnhe)//'he'//trim(ctt)//'tt'&
+               &//trim(cdtau)//'dt'//trim(cis)//'.dat'
+          open (unit=100,POSITION='append',file=trim(indir)//'/en'//trim(nombre))
+          open (unit=250,file=trim(indir)//'/dist'//trim(nombre))
+          open (unit=300,POSITION='append',file=trim(indir)//'/enm'//trim(nombre))
+          open (unit=400,file=trim(indir)//'/idist'//trim(nombre))
+       end Select
+
+      end subroutine results_file_opening
 
  End Module input_values
 

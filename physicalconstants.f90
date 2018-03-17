@@ -19,9 +19,15 @@ contains
          case('He')
           att(i)%atnum=2
           att(i)%ma=4.0026_rk*amu2au
+         case('F')
+          att(i)%atnum=9
+          att(i)%ma=18.9984032_rk*amu2au
          case('Cl')
           att(i)%atnum=17
           att(i)%ma=35.453_rk*amu2au
+         case('Br')
+          att(i)%atnum=35
+          att(i)%ma=79.904_rk*amu2au
          case default
            write(*,*) 'Atom ',atnom,'not in the list of mass assignments'
          end select

@@ -7,7 +7,7 @@ Module dmc_cal
   use phys_cons
   use pot_calculation 
   implicit none      
-Save
+ Save
  integer,parameter::delta_N_max=200
  real(rk),allocatable:: y1(:,:),y2(:,:),y3(:,:)
  real(rk),allocatable:: zcor(:,:,:),xcor(:,:)
@@ -40,6 +40,7 @@ Subroutine dmc_drv
        idum=-1234
        if (.not.fixran) call seed_cal(idum)
        call rotcons_calculation
+       call potparam
 
  main_loop:  do icorrida=1,nruns
      
@@ -114,10 +115,13 @@ End Subroutine dmc_drv
       call rotacion(y2(1,j),Y2(2,j),Y2(3,j),y3(1,j),y3(2,j),y3(3,j),phiinicial) 
       call rotacion(y2(1,j),Y2(2,j),Y2(3,j),y1(1,j),y1(2,j),y1(3,j),phiinicial) 
         
-        phiinicial = ran2(idum)*2.d0*pi*rot 
+
+      if (moltyp.gt.2) then !Rotate for a non linear molecule
+       phiinicial = ran2(idum)*2.d0*pi*rot 
        !se rota la molecula con respecto al ejez molecular un angulo phiinicial 
-      call rotacion(y3(1,j),Y3(2,j),Y3(3,j),y1(1,j),y1(2,j),y1(3,j),phiinicial) 
-      call rotacion(y3(1,j),Y3(2,j),Y3(3,j),y2(1,j),y2(2,j),y2(3,j),phiinicial)
+       call rotacion(y3(1,j),Y3(2,j),Y3(3,j),y1(1,j),y1(2,j),y1(3,j),phiinicial) 
+       call rotacion(y3(1,j),Y3(2,j),Y3(3,j),y2(1,j),y2(2,j),y2(3,j),phiinicial)
+      endif
 
      call euler(y1(:,j),y2(:,j),y3(:,j),phi,theta,psi)
  !      
@@ -125,8 +129,8 @@ End Subroutine dmc_drv
 !       !Tercero. Se asignan los valores de las posiciones iniciales del helio aleatoriamente
 !       !en una esfera de radio rr cerca del mínimo de potencial  
           do jhe=1,nhe
-            rmin=4.0_rk
-            rmax=12.0_rk
+            rmin=6.0_rk
+            rmax=15.0_rk
             if (simtyp.eq.2) then
             rmin=rfb;rmax=rfb
             endif       
@@ -252,14 +256,15 @@ End Subroutine dmc_drv
 
         do j=1,N
         !Euler angles calculation
-        call euler(y1(:,j),y2(:,j),y3(:,j),phi,theta,psi)
+      ! call euler(y1(:,j),y2(:,j),y3(:,j),phi,theta,psi)
+
+
         sumpot=0.0d0
-       
           do jhe=1,nhe
-             rhe(:,j,jhe)=(zcor(:,j,jhe)-xcor(:,j))*bo2ar
+            !rhe(:,j,jhe)=(zcor(:,j,jhe)-xcor(:,j))*bo2ar
              !Molecule is aligned with lab axis
-             call rotaciones(rhe(:,j,jhe),rrot,phi,theta,psi)
-             call potcalc(rrot(1),rrot(2),rrot(3),v_molhe)
+            !call rotaciones(rhe(:,j,jhe),rrot,phi,theta,psi)
+             call potcalc(y1(:,j),y2(:,j),y3(:,j),xcor(:,j),zcor(:,j,jhe),v_molhe)
              sumpot=sumpot+v_molhe/har2cm
           enddo
 
@@ -434,33 +439,14 @@ End Subroutine dmc_drv
          erme=ermedia/(dfloat(npaso)-dfloat(nstps/2)) 
          erme_wn(icorrida)=erme*har2cm 
          endif 
-!         
-!          
-          er_wn=er(npaso)*har2cm 
-!        
-!           !distribucion de radios
-!           if (irdist.eq.1) then
-!           if (npaso.gt.dfloat(nstps/2).and.icorrida.eq.0) Then 
-!             do j=1,ntot
-!            rcamin=dsqrt((zcor(3,j,1)-xcor(3,j))**2+(zcor(2,j,1)-xcor(2,j))**2+(zcor(1,j,1)-xcor(1,j))**2)
-!            racum=racum+rcamin
-!            idistri=Int(1d0+500d0*(rcamin-3d0))
-!            if (idistri.gt.12000) idistri=12000
-!            rdistri(idistri)=rdistri(idistri)+1
-!            ! print*,idistri,rdistri(idistri)
-!             !pause
-!              enddo
-!              endif
-!              endif   
-          !print*,npaso,er_wn,erme_wn,ikount 
-!          
+         er_wn=er(npaso)*har2cm 
          if (Abs(dfloat(Int(npaso/100))-dfloat(npaso)/100d0).lt.1d-10) Then 
          write(6,55) npaso,er_wn,erme_wn(icorrida),erme_wn2,ikount,icorrida 
          endif 
 
        55 format (I6,2x,3(F14.8,2x),I6,2x,I2)
-!        
-!          
+        
+          
         return 
         end Subroutine branch 
    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -564,21 +550,7 @@ End Subroutine dmc_drv
                                     sin(theta)*sin(psi),&
                                     sin(theta)*cos(psi),&
                                     cos(theta)/),(/3,3/))
-
                     
-                   !Inversa de la matriz anterior, al multiplicar las coordenadas de un vector en el sistema
-                      !rotado, nos da las coordenadas del mismo en el sistema fijo.
-
-                 ! matb=reshape((/cos(psi)*cos(phi)-cos(theta)*sin(phi)*sin(psi),&
-                  !               cos(psi)*sin(phi)+cos(theta)*cos(phi)*sin(psi),&
-                   !              sin(theta)*sin(psi),&
-                    !            -sin(psi)*cos(phi)-cos(theta)*sin(phi)*cos(psi),&
-                     !           -sin(psi)*sin(phi)+cos(theta)*cos(phi)*cos(psi),&
-                      !           sin(theta)*cos(psi),&
-                       !          sin(theta)*sin(phi),&
-                        !        -sin(theta)*cos(phi),&
-                         !        cos(theta)/),(/3,3/))
-
                y2=matmul(matb,y1)
          
              
@@ -789,17 +761,8 @@ End Subroutine dmc_drv
 
                     
                    !Inversa de la matriz anterior, al multiplicar las coordenadas de un vector en el sistema
-                      !rotado, nos da las coordenadas del mismo en el sistema fijo.
+                   !rotado, nos da las coordenadas del mismo en el sistema fijo.
 
-                 ! matb=reshape((/cos(psi)*cos(phi)-cos(theta)*sin(phi)*sin(psi),&
-                  !               cos(psi)*sin(phi)+cos(theta)*cos(phi)*sin(psi),&
-                   !              sin(theta)*sin(psi),&
-                    !            -sin(psi)*cos(phi)-cos(theta)*sin(phi)*cos(psi),&
-                     !           -sin(psi)*sin(phi)+cos(theta)*cos(phi)*cos(psi),&
-                      !           sin(theta)*cos(psi),&
-                       !          sin(theta)*sin(phi),&
-                        !        -sin(theta)*cos(phi),&
-                         !        cos(theta)/),(/3,3/))
 
 
                   eirr=Matmul(Matb,eirr)
