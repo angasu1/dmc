@@ -9,8 +9,8 @@ Module dmc_cal
   implicit none      
  Save
  integer,parameter::delta_N_max=200
- real(rk),allocatable:: y1(:,:),y2(:,:),y3(:,:)
- real(rk),allocatable:: zcor(:,:,:),xcor(:,:)
+ real(rk),allocatable:: y1(:,:,:),y2(:,:,:),y3(:,:,:)
+ real(rk),allocatable:: zcor(:,:,:),xcor(:,:,:)
  real(rk),allocatable::Er(:),pot(:),eloc(:),erme_wn(:)
  real(rk),allocatable::signo(:),fonda(:,:),alphahe(:),betahe(:)
  real(rk)::ermedia,ermedia2
@@ -30,8 +30,8 @@ Subroutine dmc_drv
   real(rk)    :: media,sd
   integer(ik) :: icorrida,N,npaso,j,icontr
 
-   allocate(y1(3,nw+delta_N_max),y2(3,nw+delta_N_max),y3(3,nw+delta_N_max))
-   allocate(zcor(3,nw+delta_N_max,nhe),xcor(3,nw+delta_N_max))
+   allocate(y1(3,nw+delta_N_max,nmon),y2(3,nw+delta_N_max,nmon),y3(3,nw+delta_N_max,nmon))
+   allocate(zcor(3,nw+delta_N_max,nhe),xcor(3,nw+delta_N_max,nmon))
    allocate(Er(0:nstps),pot(nw+delta_N_max),eloc(nw+delta_N_max))
    allocate(signo(nw+delta_N_max),fonda(nw+delta_N_max,0:1))
    allocate(alphahe(nhe),betahe(nhe),erme_wn(nruns))
@@ -90,7 +90,7 @@ End Subroutine dmc_drv
       Subroutine initial_conditions(icorrida)
       real (rk)   :: rr,u,phiinicial,rot,rmin,rmax
       real (rk)   :: phi,theta,psi,rrot(3),rhe(3,nw+delta_N_max,nhe)
-      integer :: jhe,j,icorrida,icont
+      integer :: jhe,jmon,j,icorrida,icont
  
     icont=0
     !Primero. Se asignan las posiciones del centro de masas de la molecula 
@@ -100,30 +100,32 @@ End Subroutine dmc_drv
   !Segundo. Se asignan los vectores de orientacion de la molecula 
   
        do j=1,nw 
-       y1(:,j)=ei
-       y2(:,j)=ej
-       y3(:,j)=ek
 
       rot=1.0d0 !poner a cero si se quiere iniciar alineado con el lab
-      phiinicial = ran2(idum)*2.d0*pi*rot
+        do jmon=1,nmon
+         y1(:,j,jmon)=ei
+         y2(:,j,jmon)=ej
+         y3(:,j,jmon)=ek
+         phiinicial = ran2(idum)*2.d0*pi*rot
        !Se rota la molecula con respecto al ejex molecular un angulo phiinicial 
-      call rotacion(y1(1,j),Y1(2,j),Y1(3,j),y3(1,j),y3(2,j),y3(3,j),phiinicial) 
-      call rotacion(y1(1,j),Y1(2,j),Y1(3,j),y2(1,j),y2(2,j),y2(3,j),phiinicial) 
+      call rotacion(y1(1,j,jmon),Y1(2,j,jmon),Y1(3,j,jmon),y3(1,j,jmon),y3(2,j,jmon),y3(3,j,jmon),phiinicial) 
+      call rotacion(y1(1,j,jmon),Y1(2,j,jmon),Y1(3,j,jmon),y2(1,j,jmon),y2(2,j,jmon),y2(3,j,jmon),phiinicial) 
         
         phiinicial = ran2(idum)*2.d0*pi*rot
        !se rota la molecula con respecto al ejey molecular un angulo phiinicial 
-      call rotacion(y2(1,j),Y2(2,j),Y2(3,j),y3(1,j),y3(2,j),y3(3,j),phiinicial) 
-      call rotacion(y2(1,j),Y2(2,j),Y2(3,j),y1(1,j),y1(2,j),y1(3,j),phiinicial) 
+      call rotacion(y2(1,j,jmon),Y2(2,j,jmon),Y2(3,j,jmon),y3(1,j,jmon),y3(2,j,jmon),y3(3,j,jmon),phiinicial) 
+      call rotacion(y2(1,j,jmon),Y2(2,j,jmon),Y2(3,j,jmon),y1(1,j,jmon),y1(2,j,jmon),y1(3,j,jmon),phiinicial) 
         
 
       if (moltyp.gt.2) then !Rotate for a non linear molecule
        phiinicial = ran2(idum)*2.d0*pi*rot 
        !se rota la molecula con respecto al ejez molecular un angulo phiinicial 
-       call rotacion(y3(1,j),Y3(2,j),Y3(3,j),y1(1,j),y1(2,j),y1(3,j),phiinicial) 
-       call rotacion(y3(1,j),Y3(2,j),Y3(3,j),y2(1,j),y2(2,j),y2(3,j),phiinicial)
+       call rotacion(y3(1,j,jmon),Y3(2,j,jmon),Y3(3,j,jmon),y1(1,j,jmon),y1(2,j,jmon),y1(3,j,jmon),phiinicial) 
+       call rotacion(y3(1,j,jmon),Y3(2,j,jmon),Y3(3,j,jmon),y2(1,j,jmon),y2(2,j,jmon),y2(3,j,jmon),phiinicial)
       endif
 
-     call euler(y1(:,j),y2(:,j),y3(:,j),phi,theta,psi)
+      call euler(y1(:,j,jmon),y2(:,j,jmon),y3(:,j,jmon),phi,theta,psi)
+         enddo
  !      
         
 !       !Tercero. Se asignan los valores de las posiciones iniciales del helio aleatoriamente
@@ -142,9 +144,9 @@ End Subroutine dmc_drv
             zcor(2,j,jhe) = rr*dsqrt(1-u**2)*dsin(phiinicial) 
             zcor(3,j,jhe) = rr*u  
       
-           rhe(:,j,jhe)=(zcor(:,j,jhe)-xcor(:,j))
+          !rhe(:,j,jhe)=(zcor(:,j,jhe)-xcor(:,j)) !OJO
        
-           call rotaciones(rhe(:,j,jhe),rrot,phi,theta,psi)
+          !call rotaciones(rhe(:,j,jhe),rrot,phi,theta,psi)
            
             if (icont.lt.10000) then 
              write (400,1000) rrot,rr,phi,theta,psi
@@ -168,7 +170,7 @@ End Subroutine dmc_drv
        real (rk),dimension(3)::Fq_x 
        real (rk),dimension(3,nhe)::Fq_z 
        real (rk)  :: phix,phiy,phiz,rvec_he(3)
-       integer     :: npaso,j,i,jhe
+       integer     :: npaso,j,i,jhe,jmon
        integer,intent(in)::N 
 !        
        do j=1,N 
@@ -182,7 +184,7 @@ End Subroutine dmc_drv
         
         if (simtyp.eq.2) then
                 do jhe=1,nhe 
-                rvec_he=zcor(:,j,jhe)-xcor(:,j)        
+                rvec_he=zcor(:,j,jhe)-xcor(:,j,1)        
        Phix=dsqrt(2d0*dtau*diffcHe)*gasdev(idum)!*0d0 
        Phiy=dsqrt(2d0*dtau*diffcHe)*gasdev(idum)!*0d0 
        Phiz=dsqrt(2d0*dtau*diffcHe)*gasdev(idum)!*0d0 
@@ -195,7 +197,6 @@ End Subroutine dmc_drv
 !        
 !       !1c-Se rota el helio con respecto al ejez de laboratorio un angulo phiz 
        call rotacion(ek(1),ek(2),ek(3),rvec_he(1),rvec_he(2),rvec_he(3),phiz) 
-
       !if (abs(rdis(xcor(:,j),zcor(:,j,jhe))-rfb).gt.tol) stop 'distancia'
              enddo
 
@@ -203,15 +204,16 @@ End Subroutine dmc_drv
 
 !       !primero, se mueve el centro de masa de la molecula y el atomo de helio
        do i=1,3 
-       xcor(i,j)=xcor(i,j)+gasdev(idum)*dsqrt(dtau*2d0*diffccm)+Fq_x(i) 
+       do jmon=1,nmon
+       xcor(i,j,jmon)=xcor(i,j,jmon)+gasdev(idum)*dsqrt(dtau*2d0*diffccm)+Fq_x(i) 
+       enddo
        do jhe=1,nhe
        zcor(i,j,jhe)=zcor(i,j,jhe)+gasdev(idum)*dsqrt(dtau*2d0*diffcHe)+Fq_z(i,jhe) 
-              ! write(*,*) 'Atilahe',dtau,diffche
-              ! stop
        enddo
        enddo
        endif
 
+       do jmon=1,nmon
 !       !Ahora se calculan los angulos para rotar la molecula
        Phix=dsqrt(2d0*dtau*A)*gasdev(idum)!*0d0 
        Phiy=dsqrt(2d0*dtau*B)*gasdev(idum)!*0d0 
@@ -220,18 +222,19 @@ End Subroutine dmc_drv
 !       !Se llama a la subrutina que efectua la rotacion 
 !        
 !       !2a-Se rota la molecula con respecto al ejex molecular un angulo phix 
-       call rotacion(y1(1,j),Y1(2,j),Y1(3,j),y3(1,j),y3(2,j),y3(3,j),phix) 
-       call rotacion(y1(1,j),Y1(2,j),Y1(3,j),y2(1,j),y2(2,j),y2(3,j),phix) 
+       call rotacion(y1(1,j,jmon),Y1(2,j,jmon),Y1(3,j,jmon),y3(1,j,jmon),y3(2,j,jmon),y3(3,j,jmon),phix) 
+       call rotacion(y1(1,j,jmon),Y1(2,j,jmon),Y1(3,j,jmon),y2(1,j,jmon),y2(2,j,jmon),y2(3,j,jmon),phix) 
 !        
 !       !2b-se rota la molecula con respecto al ejey molecular un angulo phiy 
-       call rotacion(y2(1,j),Y2(2,j),Y2(3,j),y3(1,j),y3(2,j),y3(3,j),phiy) 
-       call rotacion(y2(1,j),Y2(2,j),Y2(3,j),y1(1,j),y1(2,j),y1(3,j),phiy) 
+       call rotacion(y2(1,j,jmon),Y2(2,j,jmon),Y2(3,j,jmon),y3(1,j,jmon),y3(2,j,jmon),y3(3,j,jmon),phiy) 
+       call rotacion(y2(1,j,jmon),Y2(2,j,jmon),Y2(3,j,jmon),y1(1,j,jmon),y1(2,j,jmon),y1(3,j,jmon),phiy) 
 !        
 !       !2c-se rota la molecula con respecto al ejez molecular un angulo phiz 
        if (moltyp.gt.2) then
-       call rotacion(y3(1,j),Y3(2,j),Y3(3,j),y1(1,j),y1(2,j),y1(3,j),phiz) 
-       call rotacion(y3(1,j),Y3(2,j),Y3(3,j),y2(1,j),y2(2,j),y2(3,j),phiz)
+       call rotacion(y3(1,j,jmon),Y3(2,j,jmon),Y3(3,j,jmon),y1(1,j,jmon),y1(2,j,jmon),y1(3,j,jmon),phiz) 
+       call rotacion(y3(1,j,jmon),Y3(2,j,jmon),Y3(3,j,jmon),y2(1,j,jmon),y2(2,j,jmon),y2(3,j,jmon),phiz)
        endif
+       enddo
       
    
 
@@ -246,10 +249,10 @@ End Subroutine dmc_drv
      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        Subroutine potential_calculation(npaso,N,icontr)
         real (rk) :: phi,theta,psi,rhehe,vvhehe,v_molhe,sumpot      
-        real (rk) :: phig,thetag,rg,xvec(3)      
-        real (rk),dimension(3)::rrot,rrotb
+        real (rk) :: phig,thetag,rg,xvec(3),rad,potdim      
+        real (rk),dimension(3)::rrot,rrotb,rvec
         real(rk):: rhe(3,nw+delta_N_max,nhe)
-        integer(ik) :: j,jhe,khe,icontr,npaso
+        integer(ik) :: j,jhe,jmon,kmon,khe,icontr,npaso
         integer(ik),intent(in)::N 
         real(rk)::xcmass(3)
 
@@ -258,23 +261,33 @@ End Subroutine dmc_drv
         !Euler angles calculation
       ! call euler(y1(:,j),y2(:,j),y3(:,j),phi,theta,psi)
 
-
+          !Potential Molecule-heliums
         sumpot=0.0d0
           do jhe=1,nhe
-            !rhe(:,j,jhe)=(zcor(:,j,jhe)-xcor(:,j))*bo2ar
-             !Molecule is aligned with lab axis
-            !call rotaciones(rhe(:,j,jhe),rrot,phi,theta,psi)
-             call potcalc(y1(:,j),y2(:,j),y3(:,j),xcor(:,j),zcor(:,j,jhe),v_molhe)
+             do jmon=1,nmon
+             call potcalc(y1(:,j,jmon),y2(:,j,jmon),y3(:,j,jmon),xcor(:,j,jmon),zcor(:,j,jhe),v_molhe)
              sumpot=sumpot+v_molhe/har2cm
+             enddo
           enddo
 
           pot(j)=sumpot
 
+          !Potenital dimer(in case there are more than one molecule)
           sumpot=0d0
+             do jmon=1,nmon-1
+                     do kmon=kmon+1,nmon
+                             rvec=xcor(:,j,jmon)-xcor(:,j,kmon)  
+                             rad=dsqrt(dot_product(rvec,rvec))
+                             call potdimer(y3(:,j,jmon),y3(:,j,jmon),rvec,rad,potdim)
+                             sumpot=sumpot+potdim/har2cm
+                      enddo
+              enddo
+
+      pot(j)=pot(j)+sumpot
 
        !A este potencial hay que sumarle todas las interacciones he-he
 
-       do jhe=1,nhe
+       do jhe=1,nhe-1
         do khe=jhe+1,nhe
 
           rhehe=dsqrt(dot_product(zcor(:,j,jhe)-zcor(:,j,khe),zcor(:,j,jhe)-zcor(:,j,khe)))
@@ -326,9 +339,9 @@ End Subroutine dmc_drv
         !sobreviven y las que nacen 
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
         Subroutine branch(npaso,N,icorrida) 
-        real (rk) :: xnew(3,nw+delta_N_max),y1new(3,nw+delta_N_max),y2new(3,nw+delta_N_max)
-        real (rk) ::y3new(3,nw+delta_N_max),znew(3,nw+delta_N_max,nhe),potnew(nw+delta_N_max)
-        integer :: npaso,N,mbranch,nn,ikount,j,jhe,icorrida,kk 
+        real (rk) :: xnew(3,nw+delta_N_max,nmon),y1new(3,nw+delta_N_max,nmon),y2new(3,nw+delta_N_max,nmon)
+        real (rk) ::y3new(3,nw+delta_N_max,nmon),znew(3,nw+delta_N_max,nhe),potnew(nw+delta_N_max)
+        integer :: npaso,N,mbranch,nn,ikount,j,jhe,jmon,icorrida,kk 
         real (rk) :: W,alphar,erme_wn2,er_wn,erme,term,ekineticmol,ekinetiche,erme2
         real (rk) :: sumpotential,fondanew(nw+delta_N_max),aleat
 
@@ -379,16 +392,18 @@ End Subroutine dmc_drv
             kk=mod(npaso,2)
             fondanew(nn)=fonda(j,kk) 
 
-            xnew(:,nn) = xcor(:,j)  
+           do jmon=1,nmon  
+            xnew(:,nn,jmon) = xcor(:,j,jmon)
+            y1new(:,nn,jmon) = y1(:,j,jmon)  
+            y2new(:,nn,jmon) = y2(:,j,jmon)  
+            y3new(:,nn,jmon) = y3(:,j,jmon)  
+           enddo  
            
 
            do jhe=1,nhe  
             znew(:,nn,jhe) = zcor(:,j,jhe)  
            enddo
                                                
-            y1new(:,nn) = y1(:,j)  
-            y2new(:,nn) = y2(:,j)  
-            y3new(:,nn) = y3(:,j)  
             enddo
                         
              Enddo 
@@ -399,16 +414,20 @@ End Subroutine dmc_drv
             pot(j)=potnew(j)
             fonda(j,kk)=fondanew(j)
             
-            xcor(:,j) = xnew(:,j)  
+          do jmon=1,nmon
+             xcor(:,j,jmon) = xnew(:,j,jmon)  
+          enddo
            
 
           do jhe=1,nhe	  
             zcor(:,j,jhe) = znew(:,j,jhe)  
           enddo  
                                                   
-            y1(:,j) = y1new(:,j)  
-            y2(:,j) = y2new(:,j)  
-            y3(:,j) = y3new(:,j)  
+          do jmon=1,nmon
+             y1(:,j,jmon) = y1new(:,j,jmon)  
+             y2(:,j,jmon) = y2new(:,j,jmon)  
+             y3(:,j,jmon) = y3new(:,j,jmon)  
+          enddo 
 
          enddo 
          
@@ -605,11 +624,11 @@ End Subroutine dmc_drv
               
 
                DO k=1,nhe
-                        Rcords=xcor(:,j)-zcor(:,j,k)
+                       !Rcords=xcor(:,j)-zcor(:,j,k)
                         R=DSQRT(DOT_PRODUCT(Rcords,Rcords))
 
                         DO kk=1,3 
-                        FDER(kk,k)=(xcor(kk,j)-zcor(kk,j,k))*(5.d0*cc/R**7-aa/R)
+                       !FDER(kk,k)=(xcor(kk,j)-zcor(kk,j,k))*(5.d0*cc/R**7-aa/R)
                         ENDDO
                ENDDO
 
@@ -642,7 +661,7 @@ End Subroutine dmc_drv
         ekinetiche=0d0
 
        do k=1,nhe
-           Rcords=xcor(:,j)-zcor(:,j,k) 
+          !Rcords=xcor(:,j)-zcor(:,j,k) 
            R=DSQRT(DOT_PRODUCT(Rcords,Rcords))  
             
        do kk=1,3
@@ -650,7 +669,7 @@ End Subroutine dmc_drv
         
 
         do kkk=1,nhe
-            rkk=xcor(:,j)-zcor(:,j,kkk) 
+           !rkk=xcor(:,j)-zcor(:,j,kkk) 
             Rkkk=DSQRT(DOT_PRODUCT(rkk,rkk)) 
            suma=suma+dfx(rkkk,kk,kkk,j)
         enddo  
@@ -691,7 +710,7 @@ End Subroutine dmc_drv
         Real (rk)::rr
         integer::kder,jhe,j
 
-        dfx=df(rr)*(xcor(kder,j)-zcor(kder,j,jhe))/rr
+       !dfx=df(rr)*(xcor(kder,j)-zcor(kder,j,jhe))/rr
 
         endfunction dfx
 
@@ -700,7 +719,7 @@ End Subroutine dmc_drv
            Real (rk)::rr,dif
           integer::kder,jhe,j
 
-        dif=xcor(kder,j)-zcor(kder,j,jhe)
+       !dif=xcor(kder,j)-zcor(kder,j,jhe)
         d2fx=d2f(rr)*(dif**2)/rr**2+df(rr)*(1-dif**2/rr**2)/rr
 
         endfunction d2fx

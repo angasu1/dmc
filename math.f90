@@ -353,7 +353,6 @@
          enddo
 
  1000    format(A,3(F20.6))
- 2000    format(3(F18.6))
          return
          end subroutine write_xyzo
 
@@ -641,10 +640,10 @@ end subroutine calculate_at_number
     end subroutine write_vector
 
       subroutine translationtozero(xx,bl,nn)
-       real(rk),intent(inout)::xx(3,nn)
-       real(rk),intent(in)::bl(3)
        integer(ik),intent(in)::nn
        real(rk)::minc(3)
+       real(rk),intent(inout)::xx(3,nn)
+       real(rk),intent(in)::bl(3)
        integer(ik)::i,j
 
        do j=1,3
@@ -814,7 +813,7 @@ end subroutine calculate_at_number
     cross_unitary(2)=a(3)*b(1)-a(1)*b(3)
     cross_unitary(3)=a(1)*b(2)-a(2)*b(1)
     anorm=norm(cross_unitary)
-    if (anorm.eq.0._rk) return
+    if (anorm.lt.1.e-20_rk) return
     cross_unitary=cross_unitary/anorm
     return
     end function cross_unitary
@@ -841,8 +840,8 @@ end subroutine calculate_at_number
     !Given a vector of dimension ndim, it creates and histogram
     !taking ndivisions from the smallest to the biggest. The result
     !is stored on vector hist
-    real(rk)::vec(ndim),hist(2,ndiv),deltax,maxv,minv,delta
     integer(ik)::ndim,ndiv,i,j,k
+    real(rk)::vec(ndim),hist(2,ndiv),deltax,maxv,minv,delta
 
     maxv=maxval(vec)
     minv=minval(vec)

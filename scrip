@@ -1,0 +1,2 @@
+gfortran -c -O3 stringmod.f90 types.f90 math.f90 globals.f90 physicalconstants.f90 reading.f90 pothxhe.f90 potcal.f90  quadrature.f90 dmc_drv.f90 main.f90 -O3
+

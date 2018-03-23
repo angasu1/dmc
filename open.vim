@@ -6,7 +6,5 @@ tabe reading.f90
 tabe types.f90
 tabe dmc_drv.f90
 tabe potcal.f90
-tabe quadrature.f90
-tabe hcl.f90
-tabe pothx.f90
+tabe pothxhe.f90
 

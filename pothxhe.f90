@@ -58,6 +58,7 @@ module pothx
          &-0.006071430979_rk,0.003520180843_rk/)
  c(1,1)=-425.239879082696_rk;c(1,2)=-320.525651759542_rk
  c(2,1)=23.467575642035_rk;c(2,2)=29.052464149358_rk
+     case(4)
    end select
 
    end subroutine pars_assignment
