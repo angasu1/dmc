@@ -813,7 +813,7 @@ end subroutine calculate_at_number
     cross_unitary(2)=a(3)*b(1)-a(1)*b(3)
     cross_unitary(3)=a(1)*b(2)-a(2)*b(1)
     anorm=norm(cross_unitary)
-    if (anorm.lt.1.e-20_rk) return
+    if (anorm.lt.1.e-20_rk) stop 'problems calculating cross_unitary'
     cross_unitary=cross_unitary/anorm
     return
     end function cross_unitary

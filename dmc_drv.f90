@@ -41,6 +41,7 @@ Subroutine dmc_drv
        if (.not.fixran) call seed_cal(idum)
        call rotcons_calculation
        call potparam
+       if (nmon.gt.1) call potdimparam
 
  main_loop:  do icorrida=1,nruns
      
@@ -94,7 +95,11 @@ End Subroutine dmc_drv
  
     icont=0
     !Primero. Se asignan las posiciones del centro de masas de la molecula 
-        xcor=0D0 
+        xcor=0.0_rk
+        if (moltyp.eq.2) then
+            xcor(1,:,1)=xcor(1,:,1)-initd
+            xcor(1,:,2)=xcor(1,:,2)+initd
+        endif
         
 
   !Segundo. Se asignan los vectores de orientacion de la molecula 
@@ -272,13 +277,13 @@ End Subroutine dmc_drv
 
           pot(j)=sumpot
 
-          !Potenital dimer(in case there are more than one molecule)
+          !Dimer Potential(in case there are more than one molecule)
           sumpot=0d0
              do jmon=1,nmon-1
-                     do kmon=kmon+1,nmon
-                             rvec=xcor(:,j,jmon)-xcor(:,j,kmon)  
+                     do kmon=jmon+1,nmon
+                             rvec=xcor(:,j,kmon)-xcor(:,j,jmon)  
                              rad=dsqrt(dot_product(rvec,rvec))
-                             call potdimer(y3(:,j,jmon),y3(:,j,jmon),rvec,rad,potdim)
+                             call potdimer(y3(:,j,jmon),y3(:,j,kmon),rvec,rad,potdim)
                              sumpot=sumpot+potdim/har2cm
                       enddo
               enddo
@@ -287,6 +292,7 @@ End Subroutine dmc_drv
 
        !A este potencial hay que sumarle todas las interacciones he-he
 
+       sumpot=0d0
        do jhe=1,nhe-1
         do khe=jhe+1,nhe
 

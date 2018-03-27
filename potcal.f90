@@ -2,6 +2,8 @@
       use types
       use global_variables   
       use pothx
+      use math_subroutines
+      use hcldimpot
       Implicit none
 
       Contains
@@ -61,10 +63,49 @@
 
       end subroutine potparam
 
+      subroutine potdimparam
+       !Load the parameters for the corresponding potential
+
+       Select case (trim(molname))
+         case('pyridine') 
+         !xxvar=(/xvar,yvar,zvar/)
+         !v=PyridineHePot(xx)
+         case('benzene')
+         !call potential_benzene(x,y,z,v)
+         case('ammonia') 
+         !v=potw(x*ar2bo-xn(1),y*ar2bo-xn(2),z*ar2bo-xn(3),umb_ang)*har2cm
+         !v=potw(x,y,z,umb_ang)  !OJO
+         case('hf')
+         case('hcl')
+         call potkass
+         case('hbr')
+         case('hcn')
+       end select
+
+
+      end subroutine potdimparam
+
      subroutine potdimer(ri,rj,rvec,rad,potdim)
-      real(rk),dimension(3),intent(in)::ri,rj,rvec
+      real(rk),intent(in)::ri(3),rj(3),rvec(3)
       real(rk),intent(in):: rad
-      real(rk)::potdim
+      real(rk)::potdim,ctheta1,ctheta2,phi,cphi,temp1(3),temp2(3)
+
+
+      ctheta1=dot_product(rvec,ri)/rad
+      ctheta2=dot_product(rvec,rj)/rad
+      temp1=cross_unitary(rvec,ri)
+      temp2=cross_unitary(-rvec,rj)
+      cphi=dot_product(temp1,temp2)
+      phi=dacos(cphi)
+
+      call pothcl2(rad,ctheta1,ctheta2,phi,potdim)
+
+     !write(*,*) 'pot',rad,ctheta1,ctheta2,phi,potdim
+     !read*
+
+
+      
+           
 
             end subroutine potdimer
 

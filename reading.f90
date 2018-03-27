@@ -101,6 +101,7 @@ Contains
                 elseif (trim(args(2)).eq.'ld') then !Linear dimer
                         moltyp=2
                         nmon=2
+                        initd=1.9_rk
                 elseif (trim(args(2)).eq.'st') then  !Simmetric top
                         moltyp=3
                 elseif (trim(args(2)).eq.'as') then   !Asimmetric
@@ -308,7 +309,7 @@ Contains
            write(*,*) nombre
            write(*,*) trim(indir)
           open (unit=100,POSITION='append',file=trim(indir)//'/en'//trim(nombre))
-          open (unit=200,file=trim(indir)//'/dist'//trim(nombre))
+          open (unit=250,file=trim(indir)//'/dist'//trim(nombre))
           open (unit=300,POSITION='append',file=trim(indir)//'/enm'//trim(nombre))
           open (unit=400,file=trim(indir)//'/idist'//trim(nombre))
        end Select

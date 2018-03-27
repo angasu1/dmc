@@ -33,7 +33,7 @@ Module global_variables
   logical::is=.false.,qgau=.false.
   logical::potfit=.false.
   logical::jac=.false.
-  real(rk)::rfb,rfbmax,rfbmin,drfb,dtau,rmax,rmin,umb_ang,xn(3)
+  real(rk)::rfb,rfbmax,rfbmin,drfb,dtau,rmax,rmin,umb_ang,xn(3),initd=0.0_rk
   real(rk)::diffcHe,diffchered,diffccm,A,B,C,dhe,mHe,dmassred,mtot
   real(rk)::factorrotx=1.0_rk,factorroty=1.0_rk,factorrotz=1.0_rk
   integer(ik)::nw,state,node,nstps,nhe,nmon=1,nruns,norg,lmax,nmesh,istat
