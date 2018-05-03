@@ -305,56 +305,26 @@
               return  
               END  SUBROUTINE eigsrt
 
-             subroutine write_xyz(nfile,atyp,nat,xx,box,pbc)
+             subroutine write_xyz(nfile,nat,atyp,xx)
           integer(ik)::i,j,nfile,nat      
-          real(rk)::xx(3,nat),box(3)
+          real(rk)::xx(3,2*nat)
           character(len=2)::atyp(nat)
-          logical::pbc
  
-          write(nfile,*) nat
-          if (maxval(abs(box)).gt.1e-16_rk) then
-          write(nfile,2000) box
-          else
-          write(nfile,2000) 
-          endif
+          write(nfile,*) 2*nat
+          write(nfile,*) 
  
          do i=1,nat
-             if (pbc) then     
-             write(nfile,1000) atyp(i),(xx(j,i),j=1,3)!(per(xx(j,i),box(j)),j=1,3)
-             else
              write(nfile,1000) atyp(i),(xx(j,i),j=1,3)
-             endif
+         enddo
+
+         do i=1,nat
+             write(nfile,1000) atyp(i),(xx(j,i+2),j=1,3)
          enddo
 
  1000    format(A,3(F20.6))
- 2000    format(3(F18.6))
          return
         end subroutine write_xyz
 
-          subroutine write_xyzo(nfile,atyp,nat,xxx,box,pbc)
-          integer(ik)::i,j,k,nfile,nat      
-          real(rk)::xxx(5,nat/2),xx(3,nat),box(3)
-          character(len=2)::atyp(nat)
-          logical::pbc
- 
-          write(nfile,*) nat
-          write(nfile,*) 
-          j=0
-         do i=1,nat,2
-            j=j+1
-             xx(:,i)=(/xxx(1,j)+0.603262_rk*dcos(xxx(5,j))*dsin(xxx(4,j)),&
-                      &xxx(2,j)+0.603262_rk*dsin(xxx(5,j))*dsin(xxx(4,j)),&
-                      &xxx(3,j)+0.603262_rk*dcos(xxx(4,j))/)
-             write(nfile,1000) atyp(i),(xx(k,i),k=1,3)
-             xx(:,i+1)=(/xxx(1,j)-0.603262_rk*dcos(xxx(5,j))*dsin(xxx(4,j)),&
-                        &xxx(2,j)-0.603262_rk*dsin(xxx(5,j))*dsin(xxx(4,j)),&
-                        &xxx(3,j)-0.603262_rk*dcos(xxx(4,j))/)
-             write(nfile,1000) atyp(i+1),(xx(k,i+1),k=1,3)
-         enddo
-
- 1000    format(A,3(F20.6))
-         return
-         end subroutine write_xyzo
 
 
         function per(x,b)
@@ -825,6 +795,14 @@ end subroutine calculate_at_number
 
 
              end function norm
+
+             function rad(a,b)
+              real(rk)::rad,a(3),b(3),c(3)
+
+               c=a-b
+               rad=dsqrt(dot_product(c,c))
+
+              end function rad
 
 
       function deg(x)

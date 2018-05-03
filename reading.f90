@@ -3,6 +3,7 @@ Module input_values
   use global_variables
   use strings      
   use phys_cons
+  use math_subroutines
   implicit none
 
   integer(ik)::nargs,ierror
@@ -268,6 +269,7 @@ Contains
            do i=1,n_at
            read(30,*) att(i)%nom,coor(:,i)
            enddo
+           requil=rad(coor(:,1),coor(:,2))
             
            close(30)
 
@@ -312,6 +314,7 @@ Contains
           open (unit=250,file=trim(indir)//'/dist'//trim(nombre))
           open (unit=300,POSITION='append',file=trim(indir)//'/enm'//trim(nombre))
           open (unit=400,file=trim(indir)//'/idist'//trim(nombre))
+          open (unit=500,file=trim(indir)//'/config.xyz')
        end Select
 
       end subroutine results_file_opening

@@ -62,22 +62,19 @@ subroutine rotcons_calculation
 
  !diffusion constants in atomic units
   diffccm = 1._rk/(2._rk*mtot) 
+  if (nhe.gt.0) then
   mHe=att(n_at+1)%ma
   diffcHe = 1._rk/(2._rk*mHe) 
   dmassred=mHe*mtot/(mhe+mtot)
-  diffcHered = 1._rk/(2._rk*dmassred) 
- !dhe=diffcHered/rfb**2 !Rotational constant for the complex 
-!!if (sp) diffcHe=diffcHered  !OJO
+  diffcHered = 1._rk/(2._rk*dmassred)
+  endif 
 
 
   call rot_constants
 
-!!A=9.945_rk3 space-fixed axes using dhe. 
-!!B=A
-!!C=6.229_rk !OJO
 
-! write(*,*) 'rotcons',A,B,C,diffcHe,diffcHered 
-! 
+  !A=10.403_rk/har2cm
+  !B=A!OJO 
 
 ! A=A/har2cm
 ! B=B/har2cm

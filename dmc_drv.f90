@@ -106,7 +106,7 @@ End Subroutine dmc_drv
   
        do j=1,nw 
 
-      rot=1.0d0 !poner a cero si se quiere iniciar alineado con el lab
+      rot=0.0d0 !poner a cero si se quiere iniciar alineado con el lab
         do jmon=1,nmon
          y1(:,j,jmon)=ei
          y2(:,j,jmon)=ej
@@ -174,7 +174,7 @@ End Subroutine dmc_drv
      Subroutine diffusion(npaso,N) 
        real (rk),dimension(3)::Fq_x 
        real (rk),dimension(3,nhe)::Fq_z 
-       real (rk)  :: phix,phiy,phiz,rvec_he(3)
+       real (rk)  ::phix,phiy,phiz,rvec_he(3)
        integer     :: npaso,j,i,jhe,jmon
        integer,intent(in)::N 
 !        
@@ -220,9 +220,9 @@ End Subroutine dmc_drv
 
        do jmon=1,nmon
 !       !Ahora se calculan los angulos para rotar la molecula
-       Phix=dsqrt(2d0*dtau*A)*gasdev(idum)!*0d0 
-       Phiy=dsqrt(2d0*dtau*B)*gasdev(idum)!*0d0 
-       if (moltyp.gt.2) Phiz=dsqrt(2d0*dtau*C)*gasdev(idum)!*0d0 
+       Phix=dsqrt(2d0*dtau*A)*gasdev(idum)!*0.0_rk 
+       Phiy=dsqrt(2d0*dtau*B)*gasdev(idum)!*0.0_rk
+       if (moltyp.gt.2) Phiz=dsqrt(2.0_rk*dtau*C)*gasdev(idum)!*0d0 
        
 !       !Se llama a la subrutina que efectua la rotacion 
 !        
@@ -267,7 +267,7 @@ End Subroutine dmc_drv
       ! call euler(y1(:,j),y2(:,j),y3(:,j),phi,theta,psi)
 
           !Potential Molecule-heliums
-        sumpot=0.0d0
+        sumpot=0.0_rk
           do jhe=1,nhe
              do jmon=1,nmon
              call potcalc(y1(:,j,jmon),y2(:,j,jmon),y3(:,j,jmon),xcor(:,j,jmon),zcor(:,j,jhe),v_molhe)
@@ -278,12 +278,14 @@ End Subroutine dmc_drv
           pot(j)=sumpot
 
           !Dimer Potential(in case there are more than one molecule)
-          sumpot=0d0
+          sumpot=0.0_rk
              do jmon=1,nmon-1
                      do kmon=jmon+1,nmon
                              rvec=xcor(:,j,kmon)-xcor(:,j,jmon)  
                              rad=dsqrt(dot_product(rvec,rvec))
-                             call potdimer(y3(:,j,jmon),y3(:,j,kmon),rvec,rad,potdim)
+                            !write(*,*) 'j=',j,jmon,kmon,y3(:,j,jmon),y3(:,j,kmon)
+                             call potdimer(j,y3(:,j,jmon),y3(:,j,kmon),rvec,rad,potdim&
+                                    &,xcor(:,j,kmon),xcor(:,j,jmon))
                              sumpot=sumpot+potdim/har2cm
                       enddo
               enddo
@@ -292,7 +294,7 @@ End Subroutine dmc_drv
 
        !A este potencial hay que sumarle todas las interacciones he-he
 
-       sumpot=0d0
+       sumpot=0.0_rk
        do jhe=1,nhe-1
         do khe=jhe+1,nhe
 
@@ -357,11 +359,14 @@ End Subroutine dmc_drv
 !         
        do j=1,N 
 
+
        If (is) then
        Call Ecinetica(j)
        Else
-       Eloc(j)=0d0
+       Eloc(j)=0.0_rk
        Endif
+        !write(*,*) 'eloc',eloc(j)
+        !stop
 
        Eloc(j)=Eloc(j)+pot(j) 
 
@@ -425,7 +430,7 @@ End Subroutine dmc_drv
           enddo
            
 
-          do jhe=1,nhe	  
+          do jhe=1,nhe  
             zcor(:,j,jhe) = znew(:,j,jhe)  
           enddo  
                                                   

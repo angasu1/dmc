@@ -1,10 +1,10 @@
 Module hcldimpot
 use types
 implicit none
-real(rk),parameter:: piang=dacos(-1.0_rk)
+real(rk),parameter:: pi=dacos(-1.0_rk)
 real(rk):: lnfac(0:1000)
 integer(ik):: evenodd(-2000:2000)
-real(rk) facto(0:30)
+real(rk) facto(0:100)
 real(rk):: rhcl= 2.415069d0     
 real(rk):: a   = 3.07d0         
 real(rk):: b   = 186d0          
@@ -24,25 +24,23 @@ real(rk)::kass(31)=(/0.0_rk,0.02270071_rk,0.02136_rk,-10000._rk,0.0_rk,-0.005250
                     &0.0_rk,0.0000084_rk,0.0_rk,0.0_rk,0.0_rk,286._rk,0.0_rk,0.000137_rk,&
                     &0.000122_rk,343._rk,0.0_rk,-243._rk,1459._rk/)
 real(rk),parameter::htocm=219474.6354_rk,cf=43.597482_rk,bohtoar=0.529177249_rk
-integer(ik)::globind(2)
-integer(ik)::cont=0
-real(rk)::thr(108),pleg(0:5,0:5,2)
-integer(ik)::ind(0:5,0:5,0:10,0:5)
  
 
 
 Contains
 
        subroutine potkass
-        integer(ik)::i,la,lb,l,lcont,istat,ii(4),contt=1
-        open (unit=2000,file='../src/indexes.dat')
+        integer(ik)::i
          
          do i=1,31
            k(isubv(i),lav(i),lbv(i),lv(i))=kass(i)
          enddo   
 
 !     calculate factorials for apleg routine
-         call fact
+       facto(0)=1d0
+       do 5 i=1,30
+ 5      facto(i)=fact(i)
+
 !     set up factorials (for 3,6,9-j symbols) and parity function
          lnfac(0) = 0.d0
          lnfac(1) = 0.d0
@@ -53,63 +51,22 @@ Contains
             evenodd(i) = (-1)**i
             evenodd(-i) = evenodd(i)
  30      continue
-
-         lcont=0
-         do  la=0,5
-            do  lb=la,5
-               if ((la.eq.lb).and.(la.eq.0)) cycle
-               do  l=abs(la-lb),(la+lb)
-                       lcont=lcont+1
-               enddo
-            enddo
-        enddo
-
-
-                   
-        do
-         read(2000,*,IOSTAT=istat) ii
-          if (istat.ne.0) exit
-          ind(ii(1),ii(2),ii(3),ii(4))=contt
-          thr(contt)=threej(ii(1),ii(2),ii(3),ii(4),-ii(4),0)
-          contt=contt+1
-        enddo
-
-        close(2000)
-
-              
        return
        end subroutine potkass
 
-         subroutine leg_pol_calc(c1,c2)
-         integer(ik)::i,j
-         real(rk),intent(in)::c1,c2
-
-        do i=0,5
-                do j=0,i
-                    pleg(i,j,1)=plgndr(i,j,c1)    
-                    pleg(i,j,2)=plgndr(i,j,c2)    
-                enddo
-        enddo
-
-                 
-         return
-        end subroutine leg_pol_calc
-
-      subroutine pothcl2(rr,costh1,costh2,tau,totalcm)
+      subroutine pothcl2(rr,costh1,costh2,taud,totalcm)
 !     generate potential 
 !     Matt Elrod March 1993
       implicit none
-      real(rk),intent(in)::rr,costh1,costh2,tau
+      real(rk),intent(in)::rr,costh1,costh2,taud
       real(rk)::totalcm
       integer jhclmax,potqn(200,3),nterms
       real(rk) bhcl,m1,m2,rm,r
       real(rk) av(1000)
       real(rk) th1,th2,prefac,zerom,tzerom,rau,tan1p
       real(rk) tan1m,tan2m,total,total1,what1,what2,y1,y2,y3 
-      real(rk) totpot,this,d1,d2,d3,elec,elecnot
+      real(rk) tau,totpot,this,d1,d2,d3,elec,elecnot
       real(rk) re,gamma,qpt(64),qwt(64)
-      real(rk)::dex,dex2,dex3,dex4,dex5
-      real(rk)::rau2,rau6,rau7,rau8
       integer(ik)::i,icount,isub,la,lb,lm,m,l
       save
 
@@ -130,19 +87,15 @@ Contains
          tan1p=0.5d0*(1d0+dtanh(2.d0*(rau-6.d0)))
          tan1m=0.5d0*(1d0-dtanh(2.d0*(rau-6.d0)))
          tan2m=0.5d0*(1d0-dtanh(0.5d0*(rau-8.5d0)))
-         dex=dexp(-d3);dex2=dex*dex;dex3=dex2*dex;dex4=dex2*dex2;dex5=dex3*dex2
-         rau2=rau*rau;rau6=rau2*rau2*rau2;rau7=rau6*rau;rau8=rau6*rau2
-
-         call leg_pol_calc(costh1,costh2)
 
 !     calculate expansion coefficients
          icount=1
          totpot=0d0
 !     A(0,0,0) term
-         av(1)=k(0,0,0,0) + (ksr(1)*dex&
-              & +ksr(2)*dex2)*tan1m + (k(1,0,0,0)*dex&
-              & +k(2,0,0,0)*dex2)*tan1p*tan2m&
-              & +(k(6,0,0,0)*tan1p)/(rau6)& 
+         av(1)=k(0,0,0,0) + (ksr(1)*dexp(-d3)&
+              & +ksr(2)*dexp(-2d0*d3))*tan1m + (k(1,0,0,0)*dexp(-d3)&
+              & +k(2,0,0,0)*dexp(-2d0*d3))*tan1p*tan2m&
+              & +(k(6,0,0,0)*tan1p)/(rau**6d0)& 
               & +k(11,0,0,0)*(y1**2d0+y2**2d0)
 
 !     anisotropic A terms
@@ -155,12 +108,12 @@ Contains
                  case(8:)
                  elecnot=0d0
                  case(0:7)
-                  elecnot=(k(1,la,lb,l)*dex&
-                  &+k(2,la,lb,l)*dex2 + k(3,la,lb,l)*dex3&
-                  &+k(4,la,lb,l)*dex4 + k(5,la,lb,l)*dex5&
+                  elecnot=(k(1,la,lb,l)*dexp(-d3)&
+                  &+k(2,la,lb,l)*dexp(-2d0*d3) + k(3,la,lb,l)*dexp(-3d0*d3)&
+                  &+k(4,la,lb,l)*dexp(-4d0*d3) + k(5,la,lb,l)*dexp(-5d0*d3)&
                   &+k(9,la,lb,l)*y1 + k(10,la,lb,l)*y2)*tan1p*tan2m&
-                  &+(k(6,la,lb,l)/(rau6) + k(7,la,lb,l)/(rau7)&
-                  &+k(8,la,lb,l)/(rau8))*tan1p
+                  &+(k(6,la,lb,l)/(rau**6d0) + k(7,la,lb,l)/(rau**7d0)&
+                  &+k(8,la,lb,l)/(rau**8d0))*tan1p
                  case default
                     stop 'angular momentum l out of range'
                   end select elecnotcal 
@@ -170,7 +123,7 @@ Contains
                   elec=0d0
                   if (((la+lb).eq.l).and.(l.ne.0)) then
 !     tan1p=1d0
-              elec = evenodd(lb)*8d0*(piang**1.5d0)*((1d0/(2*l+1))**0.5d0)&
+              elec = evenodd(lb)*8d0*(pi**1.5d0)*((1d0/(2*l+1))**0.5d0)&
           &*(dexp(lnfac(2*la+2*lb)-lnfac(2*la+1)-lnfac(2*lb+1)))**0.5d0&
                       &*q(la)*q(lb)*tan1p/(cf*r**(l+1))
                   endif
@@ -210,74 +163,24 @@ Contains
             la=potqn(i,1)
             lb=potqn(i,2)
             l=potqn(i,3)
-            prefac=evenodd(la-lb)*((2d0*l+1d0)/(2d0*piang**0.5d0))
-           !zerom=threej(la,lb,l,0,0,0)*plgndr(la,0,costh1)&
-           !     &*plgndr(lb,0,costh2)
-            zerom=thr(ind(la,lb,l,0))*pleg(la,0,1)&
-                 &*pleg(lb,0,2)
+            prefac=evenodd(la-lb)*((2d0*l+1d0)/(2d0*pi**0.5d0))
+            zerom=threej(la,lb,l,0,0,0)*apleg(la,0,costh1)&
+                 &*apleg(lb,0,costh2)
             tzerom=0d0
             lm=la
             if (la.gt.lb) lm=lb 
             do 85 m=1,lm
-              !tzerom=tzerom + evenodd(m)*2d0*threej(la,lb,l,m,-m,0)&
-              !    &*plgndr(la,m,costh1)*plgndr(lb,m,costh2)*cos(m*tau)
-               tzerom=tzerom + evenodd(m)*2d0*thr(ind(la,lb,l,m))&
-                   &*pleg(la,m,1)*pleg(lb,m,2)*cos(m*tau)
+               tzerom=tzerom + evenodd(m)*2d0*threej(la,lb,l,m,-m,0)&
+                   &*apleg(la,m,costh1)*apleg(lb,m,costh2)*cos(m*tau)
+              !what1=apleg(la,m,costh1)
+              !what2=apleg(lb,m,costh2)
  85         continue
-      total=total+prefac*(zerom+tzerom)*av(i)
+          total=total+prefac*(zerom+tzerom)*av(i)
 
  100     continue
          totalcm=total*htocm
          return
          end subroutine pothcl2 
-
-      FUNCTION plgndr(l,m,x)
-      INTEGER(ik) l,m
-      REAL(rk) plgndr,x,anorm
-      INTEGER(ik) i,ll
-      REAL(rk) fact,pll,pmm,pmmp1,somx2
-
-!     normalization
-      if ((l.eq.0).and.(m.eq.0)) then
-         anorm=(1d0/(4d0*piang))**0.5d0
-      else
-         anorm=(((2d0*l+1d0)*facto(l-m))/(4d0*piang*facto(l+m)))**.5d0
-      endif
-     !anorm=1.0_rk
-      if(m.lt.0.or.m.gt.l.or.abs(x).gt.1.) stop 'bad arguments in plgndr'
-      pmm=1.
-      if(m.gt.0) then
-        somx2=sqrt((1.-x)*(1.+x))
-        fact=1.0_rk
-        do 11 i=1,m
-          pmm=-pmm*fact*somx2
-          fact=fact+2.0_rk
-11      continue
-      endif
-
-      if(l.eq.m) then
-        plgndr=anorm*pmm
-      else
-        pmmp1=x*(2*m+1)*pmm
-        if(l.eq.m+1) then
-          plgndr=anorm*pmmp1
-        else
-          do 12 ll=m+2,l
-            pll=(x*(2*ll-1)*pmmp1-(ll+m-1)*pmm)/(ll-m)
-            pmm=pmmp1
-            pmmp1=pll
-12        continue
-
-
-          plgndr=anorm*pll
-        endif
-      endif
-      if (abs(x-0.6819).lt.0.1_rk) then
-      write(200,1000) l,m
-      endif
-1000 format(2(I6,3x),2(f18.10))      
-      return
-      END function plgndr
 
       function apleg(l,m,x)
 !     this function evaluates the associated legendre polynomials for 
@@ -296,9 +199,9 @@ Contains
 
 !     normalization
       if ((l.eq.0).and.(m.eq.0)) then
-         anorm=(1d0/(4d0*piang))**0.5d0
+         anorm=(1d0/(4d0*pi))**0.5d0
       else
-         anorm=(((2d0*l+1d0)*facto(l-m))/(4d0*piang*facto(l+m)))**.5d0
+         anorm=(((2d0*l+1d0)*facto(l-m))/(4d0*pi*facto(l+m)))**.5d0
       endif
 
 !     write(*,*)l,m,x,anorm
@@ -332,8 +235,6 @@ Contains
                   apleg=pll
                endif
             endif
-
-           !anorm=1.0_rk!OJO
             
             apleg=anorm*apleg
 
@@ -341,17 +242,19 @@ Contains
             end function apleg
 
 
-       subroutine fact
+       function fact(ix)
        implicit none
-       integer(ik)::i
+       real(rk)::fact,afact
+       integer(ik)::ix,i
 
-       facto(0)=1._rk
-       facto(1)=1._rk
-       do i=2,30
-       facto(i)=dfloat(i)*facto(i-1)
-       enddo        
-
-         end subroutine fact
+      fact=0
+      afact=1d0
+      if(ix)599,601,602
+ 602  do 600 i=1,ix
+ 600     afact=afact*i
+ 601     fact=afact
+ 599     return
+         end function fact
 
 
 
@@ -361,8 +264,7 @@ Contains
       real(rk):: threej,lndelta,lnpart1,lnpart2,lnthrj,answer
       threej = 0.d0
       answer = 0.d0
-! write(200,1000) j1,j2,j3,m1
-! 1000 format(8(I6,3x))      
+
 !     if m1=m2=m3 then j1+j2+j3 must be even
       if ((m1.eq.0).and.(m2.eq.0).and.(m3.eq.0).and.(mod((j1+j2+j3),2).eq.1)) return
 
