@@ -845,5 +845,47 @@ end subroutine calculate_at_number
 
     return
    end subroutine histogram        
+
+             subroutine rotz(rij,th)
+               real(rk)::rij(3),th,Amat(3,3),rijt(3)
+               integer(ik)::i,j
+
+               amat(1,:)=(/dcos(th),dsin(th),0.0_rk/)
+               amat(2,:)=(/-dsin(th),dcos(th),0.0_rk/)
+               amat(3,:)=(/0.0_rk,0.0_rk,1.0_rk/)
+               rijt=0.0_rk
+
+               do i=1,3
+                       do j=1,3
+                         rijt(i)=rijt(i)+amat(i,j)*rij(j)
+                       enddo
+               enddo
+
+                  rij=rijt      
+                               
+
+              return
+              end subroutine rotz      
+
+             subroutine roty(rij,th)
+               real(rk)::rij(3),th,Amat(3,3),rijt(3)
+               integer(ik)::i,j
+
+               amat(1,:)=(/dcos(th),0.0_rk,dsin(th)/)
+               amat(2,:)=(/0.0_rk,1.0_rk,0.0_rk/)
+               amat(3,:)=(/-dsin(th),0.0_rk,dcos(th)/)
+               rijt=0.0_rk
+
+               do i=1,3
+                       do j=1,3
+                         rijt(i)=rijt(i)+amat(i,j)*rij(j)
+                       enddo
+               enddo
+
+                  rij=rijt      
+                               
+
+              return
+              end subroutine roty      
  
 end module math_subroutines

@@ -84,53 +84,170 @@ Contains
          return
         end subroutine write_xyz
 
+        function radius(a,b)
+        real(rk)::a(3),b(3),c(3),radius
+        c=b-a
+        radius=dsqrt(dot_product(c,c))
+        return
+        end function radius
+
+        function deg(rad)
+         real(rk)::deg,rad
+
+           deg=rad*180_rk/pi
+
+          return
+         end function deg       
+
+!        function norm(a)
+!        real(rk)::norm,a(3)
+!        radius=dsqrt(dot_product(a,a))
+
+!       return
+!       end function norm
+
+             subroutine rotz(rij,th)
+               real(rk)::rij(3),th,Amat(3,3),rijt(3)
+               integer(ik)::i,j
+
+               amat(1,:)=(/dcos(th),dsin(th),0.0_rk/)
+               amat(2,:)=(/-dsin(th),dcos(th),0.0_rk/)
+               amat(3,:)=(/0.0_rk,0.0_rk,1.0_rk/)
+               rijt=0.0_rk
+
+               do i=1,3
+                       do j=1,3
+                         rijt(i)=rijt(i)+amat(i,j)*rij(j)
+                       enddo
+               enddo
+
+                  rij=rijt      
+                               
+
+              return
+              end subroutine rotz      
+
+             subroutine roty(rij,th)
+               real(rk)::rij(3),th,Amat(3,3),rijt(3)
+               integer(ik)::i,j
+
+               amat(1,:)=(/dcos(th),0.0_rk,dsin(th)/)
+               amat(2,:)=(/0.0_rk,1.0_rk,0.0_rk/)
+               amat(3,:)=(/-dsin(th),0.0_rk,dcos(th)/)
+               rijt=0.0_rk
+
+               do i=1,3
+                       do j=1,3
+                         rijt(i)=rijt(i)+amat(i,j)*rij(j)
+                       enddo
+               enddo
+
+                  rij=rijt      
+                               
+
+              return
+              end subroutine roty      
+
 
 end module configur
 
   program confs
    use configur
    implicit none
-   integer(ik)::i,j,idum
-   real(rk)::y(3,2),xx(3,4),rij(3),theta(2),phi,signo
-   real(rk)::m1,m2,mtot,requil,fac1,fac2
-   real(rk)::ctheta1,ctheta2,temp1(3),temp2(3),cphi
+   integer(ik)::i,j,k,idum
+   real(rk)::y(3,2),xx(3,4),rij(3),theta(2),phi(2),signo,xcm(3,2)
+   real(rk)::m1,m2,mtot,requil,fac1,fac2,boxl,throt,phrot
+   real(rk)::ctheta1,ctheta2,temp1(3),temp2(3),cphi,phi1,phi2,phi3,phi4,error
    open(unit=100,file='cart.xyz')
    open(unit=200,file='angles.dat')
+   open(unit=300,file='radius.dat')
 
    rij=(/3.8_rk,0.0_rk,0.0_rk/)
-   m2=35.453_rk
    m1=1.0_rk
+   m2=35.453_rk
    mtot=m1+m2
    requil=1.5_rk
    idum=-12345
    fac1=-(m1*requil/mtot)
    fac2=fac1+requil
+   boxl=10.0_rk
 
-    do i=1,100
+configs:do i=1,100
+            !Calculation of rij vector
+            do j=1,2
+                    do k=1,3
+                      xcm(k,j)=(0.5_rk-ran2(idum))*boxl      
+                    enddo
+            enddo      
+
+             rij=xcm(:,2)-xcm(:,1)
+             
+              
+
+     !Calculation of yi vecs
      do j=1,2      
       theta(j)=ran2(idum)*pi
-      signo=1.0_rk      
-      if (ran2(idum).lt.0.5_rk) signo=-1.0_rk
-      y(:,j)=(/dsin(signo*theta(j)),dcos(signo*theta(j)),0.0_rk/)  
-     !write(*,*) 'fac',fac1,fac2
-      if (j.eq.1) then
-       xx(:,1)=fac2*y(:,j)
-       xx(:,2)=fac1*y(:,j)
-      else
-       xx(:,3)=fac2*y(:,j)+rij
-       xx(:,4)=fac1*y(:,j)+rij
-      endif
+      phi(j)=ran2(idum)*2.0_rk*pi
+      y(:,j)=(/dsin(theta(j))*dcos(phi(j)),dsin(theta(j))*dsin(phi(j)),dcos(theta(j))/)  
      enddo
-      ctheta1=dot_product(y(:,1),rij)/3.8_rk
-      ctheta2=dot_product(y(:,2),rij)/3.8_rk
+
+     !Rotation to the system
+             phrot=datan2(-rij(2),rij(1))
+             throt=dacos(rij(3)/norm(rij))
+             throt=pi/2.0_rk-throt
+
+            !write(*,*) 'rij ant',rij
+             call rotz(rij,-phrot)
+             call rotz(y(:,1),-phrot)
+             call rotz(y(:,2),-phrot)
+            !write(*,*) 'rij desp',rij
+             call roty(rij,throt)
+             call roty(y(:,1),throt)
+             call roty(y(:,2),throt)
+            !write(*,*) 'rij desp2',rij
+            !stop
+
+
+
+     !Calculation of cartesian coords
+       xx(:,1)=fac2*y(:,1)-rij/2.0_rk
+       xx(:,2)=fac1*y(:,1)-rij/2.0_rk
+       xx(:,3)=fac2*y(:,2)+rij/2.0_rk
+       xx(:,4)=fac1*y(:,2)+rij/2.0_rk
+
+
+     !Angles for potential calculation
+      ctheta1=dot_product(y(:,1),rij)/norm(rij)
+      ctheta2=dot_product(y(:,2),rij)/norm(rij)
+
+      !phi, method 1
       temp1=cross_unitary(y(:,1),rij)
-      temp2=cross_unitary(y(:,1),rij)
-      cphi=dot_product(-temp1,temp2)
-      phi=dacos(cphi)
-             call write_xyz(100,4,atnom,xx)
-             write(200,1000) dcos(theta(1))-ctheta1,dcos(theta(2))-ctheta2,phi*180_rk/pi
+      temp2=cross_unitary(y(:,2),rij)
+      cphi=dot_product(temp1,temp2)
+      phi4=dacos(cphi)
+
+      !Phi method 2
+      phi1=datan2(xx(2,1),xx(3,1))
+      phi2=datan2(xx(2,3),xx(3,3))
+      phi3=abs(phi1-phi2)
+
+      if(abs(deg(phi3)-deg(phi4)).lt.1.0e-10_rk) then
+        error=0.0_rk
+      else
+        error=abs(deg(phi3)-360.0_rk+deg(phi4))
+      endif
+
+
+      !Writing in files
+      call write_xyz(100,4,atnom,xx)
+      write(200,1000) deg(acos(ctheta1)),deg(acos(ctheta2)),deg(phi4),deg(phi3),error
+      write(300,1000) radius(xx(:,1),xx(:,2)),radius(xx(:,3),xx(:,4))&
+                      &,radius((m1*xx(:,1)+m2*xx(:,2))/mtot,(m1*xx(:,3)+m2*xx(:,4))/mtot)
+
+
  1000 format(*(F18.10,3x))
-    enddo
+    
+      enddo configs
 
 
    end program confs        

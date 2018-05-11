@@ -87,11 +87,12 @@
 
      subroutine potdimer(j,ri,rj,rvec,rad,potdim,xcm1,xcm2)
       integer(ik),intent(in)::j
-      real(rk)::ri(3),rj(3),rvec(3),xcm1(3),xcm2(3)
-      real(rk):: rad
+      real(rk),intent(in)::ri(3),rj(3),rvec(3),xcm1(3),xcm2(3),rad
       real(rk)::potdim,ctheta1,ctheta2,phi,cphi,temp1(3),temp2(3)
-      real(rk)::cart_coor(3,4),fac1,fac2
+      real(rk)::cart_coor(3,4),fac1,fac2,error
       integer(ik)::i
+      real(rk)::ctheta1c,ctheta2c,phic,cart_coorc(3,4)
+      real(rk)::ric(3),rjc(3),rvecc(3),radc
 
 
      !rvec=(/3.746_rk,0.0_rk,0.0_rk/);rad=3.746_rk
@@ -100,11 +101,14 @@
      !xcm1=(/0.0_rk,0.0_rk,0.0_rk/)
      !xcm2=(/3.746_rk,0.0_rk,0.0_rk/)
 
+      ric=ri;rjc=rj;rvecc=rvec;radc=rad
+      call calculated_angles(ric,rjc,rvecc,radc,ctheta1c,ctheta2c,phic,cart_coorc)
+
       ctheta1=dot_product(rvec,ri)/rad
       ctheta2=dot_product(rvec,rj)/rad
       temp1=cross_unitary(ri,rvec)
       temp2=cross_unitary(rj,rvec)
-      cphi=dot_product(-temp1,temp2)
+      cphi=dot_product(temp1,temp2)
       phi=dacos(cphi)
       if (abs(norm(ri)-1.0_rk).gt.1.0e-10_rk) stop 'norma1!!'
       if (abs(norm(rj)-1.0_rk).gt.1.0e-10_rk) stop 'norma2!!'
@@ -119,6 +123,20 @@
        call write_xyz(500,2,att%nom,cart_coor)
        endif 
 
+       if  (abs(ctheta1-ctheta1c).gt.tol) stop 'theta1'
+       if  (abs(ctheta2-ctheta2c).gt.tol) stop 'theta2'
+
+      if(abs(deg(phi)-deg(phic)).lt.tolb) then
+        error=0.0_rk
+      else
+        error=abs(deg(phi)-360.0_rk+deg(phic))
+      endif
+
+        If (error.gt.tolb) then
+               write(*,*) deg(phi),deg(phic),deg(phi+phic),error
+                stop 'error'
+        endif
+
 
        Select case (trim(molname))
          case('pyridine') 
@@ -132,7 +150,8 @@
          case('hf')
          case('hcl')
            !ctheta1=dcos(9.0_rk*pi/180.0_rk);ctheta2=dcos(89.0_rk*pi/180.0_rk);phi=180.0_rk     
-         call pothcl2(rad,ctheta1,ctheta2,phi,potdim)
+         call pothcl2(rad,ctheta1c,ctheta2c,phic,potdim)
+        !call pothcl2(rad,ctheta1,ctheta2,phi,potdim)
            !write(*,*) 'rad',rad,ctheta1,ctheta2,phi,potdim
            !stop
          case('hbr')
@@ -148,6 +167,60 @@
            
 
             end subroutine potdimer
+       
+           subroutine calculated_angles(ri,rj,rij,rad,ct1,ct2,ph,xx)
+           real(rk)::ri(3),rj(3),rij(3),rad
+           real(rk)::xx(3,4),ct1,ct2,ph,ph1,ph2,fac1,fac2
+           real(rk)::phrot,throt
+
+           fac1=-(att(1)%ma*requil/mtot)
+           fac2=fac1+requil
+
+     !Rotation to the system
+             phrot=datan2(-rij(2),rij(1))
+             throt=dacos(rij(3)/norm(rij))
+             throt=pi/2.0_rk-throt
+
+            !write(*,*) 'rij ant',rij
+             call rotz(rij,-phrot)
+             call rotz(ri,-phrot)
+             call rotz(rj,-phrot)
+            !write(*,*) 'rij desp',rij
+             call roty(rij,throt)
+             call roty(ri,throt)
+             call roty(rj,throt)
+            !write(*,*) 'rij desp2',rij
+            !stop
+
+
+
+     !Calculation of cartesian coords
+       xx(:,1)=fac2*ri-rij/2.0_rk
+       xx(:,2)=fac1*ri-rij/2.0_rk
+       xx(:,3)=fac2*rj+rij/2.0_rk
+       xx(:,4)=fac1*rj+rij/2.0_rk
+
+
+     !Angles for potential calculation
+      ct1=dot_product(ri,rij)/norm(rij)
+      ct2=dot_product(rj,rij)/norm(rij)
+
+      !phi, method 1
+     !temp1=cross_unitary(ri,rij)
+     !temp2=cross_unitary(rj,rij)
+     !cphi=dot_product(temp1,temp2)
+     !ph=dacos(cphi)
+
+      !Phi method 2
+      ph1=datan2(xx(2,1),xx(3,1))
+      ph2=datan2(xx(2,3),xx(3,3))
+      ph=abs(ph1-ph2)
+                   
+
+
+
+           return
+           end subroutine calculated_angles
 
     end Module pot_calculation
 
