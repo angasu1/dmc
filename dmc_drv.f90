@@ -95,11 +95,11 @@ Subroutine dmc_drv
 
 steps:  do npaso=1,nstps
 
-      if (icorrida.eq.1) then
-        if (npaso.ge.nstps-1000) then
-        call dist_writing(N)
-        endif
-      endif
+     !if (icorrida.eq.1) then
+     !  if (npaso.ge.nstps-1000) then
+     !  call dist_writing(N)
+     !  endif
+     !endif
 
        !Se llama a la subrutina que efectúa la difusión
         call diffusion(npaso,N)
