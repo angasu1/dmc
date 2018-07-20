@@ -85,62 +85,63 @@
 
       end subroutine potdimparam
 
-     subroutine potdimer(j,ri,rj,rvec,rad,potdim,xcm1,xcm2)
+     subroutine potdimer(j,ri,rj,xcm1,xcm2,potdim)
       integer(ik),intent(in)::j
-      real(rk),intent(in)::ri(3),rj(3),rvec(3),xcm1(3),xcm2(3),rad
-      real(rk)::potdim,ctheta1,ctheta2,phi,cphi,temp1(3),temp2(3)
-      real(rk)::cart_coor(3,4),fac1,fac2,error
+      real(rk),intent(in)::ri(3),rj(3),xcm1(3),xcm2(3)
+      real(rk)::potdim,ctheta1,ctheta2,phi
+      real(rk)::cart_coor(3,2*nmon),error,rvec(3),rad
       integer(ik)::i
-      real(rk)::ctheta1c,ctheta2c,phic,cart_coorc(3,4)
+      real(rk)::ctheta1c,ctheta2c,phic,cart_coorc(3,2*nmon)
       real(rk)::ric(3),rjc(3),rvecc(3),radc
+      real(rk)::xa,ya,za,xb,yb,zb,xcoma,ycoma,zcoma,xcomb,ycomb,zcomb
+      real(rk)::tha2,thb2,pha2,phb2,ph
 
 
-     !rvec=(/3.746_rk,0.0_rk,0.0_rk/);rad=3.746_rk
-     !ri=(/cos(9.0_rk*pi/180.0_rk),0.0_rk,sin(9.0_rk*pi/180.0_rk)/)
-     !rj=(/cos(89.8_rk*pi/180.0_rk),0.0_rk,sin(89.8_rk*pi/180.0_rk)/)
-     !xcm1=(/0.0_rk,0.0_rk,0.0_rk/)
-     !xcm2=(/3.746_rk,0.0_rk,0.0_rk/)
-
+      !Subroutine to convert from dmc coordinates to internal and cartesian
+      call internal_coord_conv(ri,rj,xcm1,xcm2,rvec,rad,ctheta1,ctheta2,phi,cart_coor)
+      !Another method for converting coordinates
       ric=ri;rjc=rj;rvecc=rvec;radc=rad
       call calculated_angles(ric,rjc,rvecc,radc,ctheta1c,ctheta2c,phic,cart_coorc)
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !David`s conversion of coordinates
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    ! xa=ri(1)+xcm1(1)
+    ! ya=ri(2)+xcm1(2)
+    ! za=ri(3)+xcm1(3)
+    ! xb=rj(1)+xcm2(1)
+    ! yb=rj(2)+xcm2(2)
+    ! zb=rj(3)+xcm2(3)
+    ! xcoma=xcm1(1)
+    ! ycoma=xcm1(2)
+    ! zcoma=xcm1(3)
+    ! xcomb=xcm2(1)
+    ! ycomb=xcm2(2)
+    ! zcomb=xcm2(3)
+    !    call angs(xa,ya,za,xb,yb,zb,xcoma,ycoma,zcoma,xcomb,ycomb,zcomb,j,&
+    !   &tha2,thb2,pha2,phb2,ph)
+    !  ctheta1c=dcos(tha2)
+    !  ctheta2c=dcos(thb2)
+    !  phic=ph
 
-      ctheta1=dot_product(rvec,ri)/rad
-      ctheta2=dot_product(rvec,rj)/rad
-      temp1=cross_unitary(ri,rvec)
-      temp2=cross_unitary(rj,rvec)
-      cphi=dot_product(temp1,temp2)
-      phi=dacos(cphi)
-      if (abs(norm(ri)-1.0_rk).gt.1.0e-10_rk) stop 'norma1!!'
-      if (abs(norm(rj)-1.0_rk).gt.1.0e-10_rk) stop 'norma2!!'
-      fac1=-(att(2)%ma*requil/mtot)
-      fac2=fac1+requil
-     !write(*,*) 'fac',fac1,fac2
-       cart_coor(:,1)=fac2*ri+xcm1
-       cart_coor(:,2)=fac1*ri+xcm1
-       cart_coor(:,3)=fac2*rj+xcm2
-       cart_coor(:,4)=fac1*rj+xcm2
-       if (j.eq.1) then
-       call write_xyz(500,2,att%nom,cart_coor)
-       endif 
+      !!!!!!!!!!!!Checking part!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+     !if (abs(norm(ri)-1.0_rk).gt.1.0e-10_rk) stop 'norma1!!'
+     !if (abs(norm(rj)-1.0_rk).gt.1.0e-10_rk) stop 'norma2!!'
 
-       if  (abs(ctheta1-ctheta1c).gt.tol) stop 'theta1'
-       if  (abs(ctheta2-ctheta2c).gt.tol) stop 'theta2'
+     ! if  (abs(ctheta1-ctheta1c).gt.tol) stop 'theta1'
+     ! if  (abs(ctheta2-ctheta2c).gt.tol) stop 'theta2'
 
-      if(abs(deg(phi)-deg(phic)).lt.tolb) then
-        error=0.0_rk
-      else
-        error=abs(deg(phi)-360.0_rk+deg(phic))
-      endif
+     !if(abs(deg(phi)-deg(phic)).lt.tolb) then
+     !  error=0.0_rk
+     !else
+     !  error=abs(deg(phi)-360.0_rk+deg(phic))
+     !endif
 
-        If (error.gt.tolb) then
-               write(*,*) deg(phi),deg(phic),deg(phi+phic),error
-                stop 'error'
-        endif
 
+      !!!!!!!!!!!!!!!!End of checking!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
        Select case (trim(molname))
          case('pyridine') 
-         !xxvar=(/xvar,yvar,zvar/)
+         !xxvar=(/xvar,yvar,zvar/)G
          !v=PyridineHePot(xx)
          case('benzene')
          !call potential_benzene(x,y,z,v)
@@ -148,9 +149,12 @@
          !v=potw(x*ar2bo-xn(1),y*ar2bo-xn(2),z*ar2bo-xn(3),umb_ang)*har2cm
          !v=potw(x,y,z,umb_ang)  !OJO
          case('hf')
+          call hf2pot(1.7374_rk,1.7374_rk,rad,deg(dacos(ctheta1c)),deg(dacos(ctheta2c)),deg(phic),potdim)
+         !call hf2pot(1.7445d0, 1.7404d0, 5.144d0, 9.00d0, 64.14d0, 180.00d0,potdim)
+         !write(*,*) 'atila',potdim
          case('hcl')
            !ctheta1=dcos(9.0_rk*pi/180.0_rk);ctheta2=dcos(89.0_rk*pi/180.0_rk);phi=180.0_rk     
-         call pothcl2(rad,ctheta1c,ctheta2c,phic,potdim)
+         call pothcl2(rad*0.52917725_rk,ctheta1c,ctheta2c,phic,potdim)
         !call pothcl2(rad,ctheta1,ctheta2,phi,potdim)
            !write(*,*) 'rad',rad,ctheta1,ctheta2,phi,potdim
            !stop
@@ -159,18 +163,13 @@
        end select
 
 
-     !write(*,*) 'pot',rad,ctheta1,ctheta2,phi,potdim
-     !read*
 
-
-      
-           
-
+            return
             end subroutine potdimer
        
            subroutine calculated_angles(ri,rj,rij,rad,ct1,ct2,ph,xx)
-           real(rk)::ri(3),rj(3),rij(3),rad
-           real(rk)::xx(3,4),ct1,ct2,ph,ph1,ph2,fac1,fac2
+           real(rk),intent(in)::ri(3),rj(3),rij(3),rad
+           real(rk)::xx(3,2*nmon),ct1,ct2,ph,ph1,ph2,fac1,fac2
            real(rk)::phrot,throt
 
            fac1=-(att(1)%ma*requil/mtot)
@@ -212,8 +211,8 @@
      !ph=dacos(cphi)
 
       !Phi method 2
-      ph1=datan2(xx(2,1),xx(3,1))
-      ph2=datan2(xx(2,3),xx(3,3))
+      ph1=datan2(ri(2),ri(3))
+      ph2=datan2(rj(2),rj(3))
       ph=abs(ph1-ph2)
                    
 
@@ -221,6 +220,156 @@
 
            return
            end subroutine calculated_angles
+
+      subroutine internal_coord_conv(ri,rj,xcm1,xcm2,rvec,rad,ctheta1,ctheta2,phi,cart_coor)
+      real(rk),intent(in)::ri(3),rj(3),xcm1(3),xcm2(3)
+      real(rk),intent(out)::rvec(3),rad,ctheta1,ctheta2,phi,cart_coor(3,2*nmon)      
+      real(rk)::fac1,fac2,temp1(3),temp2(3),cphi
+
+      rvec=xcm1-xcm2  
+      rad=norm(rvec)
+      !return !OJO
+      ctheta1=dot_product(rvec,ri)/rad
+      ctheta2=dot_product(rvec,rj)/rad
+      temp1=cross_unitary(ri,rvec)
+      temp2=cross_unitary(rj,rvec)
+      cphi=dot_product(temp1,temp2)
+      phi=dacos(cphi)
+
+      fac1=-(att(2)%ma*requil/mtot)
+      fac2=fac1+requil
+
+       cart_coor(:,1)=fac2*ri+xcm1
+       cart_coor(:,2)=fac1*ri+xcm1
+       cart_coor(:,3)=fac2*rj+xcm2
+       cart_coor(:,4)=fac1*rj+xcm2
+
+      end subroutine internal_coord_conv
+
+
+      subroutine angs(xa,ya,za,xb,yb,zb,xcoma,ycoma,zcoma,xcomb,ycomb,zcomb,jj,&
+        &tha2,thb2,pha2,phb2,ph)
+	real(rk):: xA,yA,zA
+	real(rk):: xcomA,ycomA,zcomA
+	real(rk):: xB,yB,zB
+	real(rk):: xcomB,ycomB,zcomB
+        real(rk):: xa0,ya0,za0,xb0,yb0,zb0,xxa,yya,zza,xxb,yyb,zzb
+        real(rk):: rr,xnewa,ynewa,znewa,xnewb,ynewb,znewb,xcmb,ycmb,zcmb
+        real(rk):: xn1a,xn1b,yn1a,yn1b,zn1a,zn1b,xcm1b,ycm1b,zcm1b
+        real(rk):: tha2,thb2,pha2,phb2,thet,phi,th,ph
+        integer(ik)::j,jj
+
+        j=jj
+
+ xa0=0.d0
+ ya0=0.d0
+ za0=0.d0
+
+
+ xb0=xcomB-xcomA
+ yb0=ycomB-ycomA
+ zb0=zcomB-zcomA
+
+       xxa=xA-xcomA
+               yya=yA-ycomA
+               zza=zA-zcomA
+
+               xxb=xB-xcomA
+               yyb=yB-ycomA
+               zzb=zB-zcomA
+
+
+
+ rr=dsqrt((xa0-yb0)**2+(ya0-yb0)**2+(za0-zb0)**2)
+
+ thet=dacos(zzb/rr)
+ phi=datan2(yb0,xb0)
+
+
+
+ xnewa=xxa*dcos(phi)+yya*dsin(phi)
+ ynewa=-xxa*dsin(phi)+yya*dcos(phi)
+ znewa=zza
+
+ xnewb=xxb*dcos(phi)+yyb*dsin(phi)
+ ynewb=-xxb*dsin(phi)+yyb*dcos(phi)
+ znewb=zzb
+
+ xcmb=xb0*dcos(phi)+yb0*dsin(phi)
+ ycmb=-xb0*dsin(phi)+yb0*dcos(phi)
+ zcmb=zb0
+
+
+
+ rr=dsqrt(xcmb**2+ycmb**2+zcmb**2)
+
+ th=dacos(zcmb/rr)
+ 
+
+ xn1a=dcos(th)*xnewa-dsin(th)*znewa
+ yn1a=ynewa
+ zn1a=dsin(th)*xnewa+dcos(th)*znewa
+
+ xn1b=dcos(th)*xnewb-dsin(th)*znewb
+ yn1b=ynewb
+ zn1b=dsin(th)*xnewb+dcos(th)*znewb
+
+ xcm1b=dcos(th)*xcmb-dsin(th)*zcmb
+ ycm1b=ycmb
+ zcm1b=dsin(th)*xcmb+dcos(th)*zcmb
+
+ 
+ tha2=dacos(zn1a)
+ thb2=dacos(zn1b-zcm1b)
+
+ pha2=datan2(yn1a,xn1a)
+ phb2=datan2((yn1b-ycm1b),(xn1b-xcm1b))
+ ph=pha2-phb2
+
+
+ 
+
+
+return
+end subroutine angs
+
+           subroutine cartesian_coords_conv(ri,rj,rij,rad,xx)
+           real(rk),intent(in)::ri(3),rj(3),rij(3),rad
+           real(rk)::xx(3,2*nmon)
+           real(rk)::phrot,throt,fac1,fac2
+
+           fac1=-(att(1)%ma*requil/mtot)
+           fac2=fac1+requil
+
+     !Rotation to the system
+             phrot=datan2(-rij(2),rij(1))
+             throt=dacos(rij(3)/norm(rij))
+             throt=pi/2.0_rk-throt
+
+            !write(*,*) 'rij ant',rij
+             call rotz(rij,-phrot)
+             call rotz(ri,-phrot)
+             call rotz(rj,-phrot)
+            !write(*,*) 'rij desp',rij
+             call roty(rij,throt)
+             call roty(ri,throt)
+             call roty(rj,throt)
+            !write(*,*) 'rij desp2',rij
+            !stop
+
+
+
+     !Calculation of cartesian coords
+       xx(:,1)=fac2*ri-rij/2.0_rk
+       xx(:,2)=fac1*ri-rij/2.0_rk
+       xx(:,3)=fac2*rj+rij/2.0_rk
+       xx(:,4)=fac1*rj+rij/2.0_rk
+
+
+
+       return
+       end subroutine cartesian_coords_conv
+
 
     end Module pot_calculation
 

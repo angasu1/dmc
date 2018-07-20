@@ -37,7 +37,7 @@ Module global_variables
   real(rk)::diffcHe,diffchered,diffccm,A,B,C,dhe,mHe,dmassred,mtot,requil
   real(rk)::factorrotx=1.0_rk,factorroty=1.0_rk,factorrotz=1.0_rk
   integer(ik)::nw,state,node,nstps,nhe,nmon=1,nruns,norg,lmax,nmesh,istat
-  integer(ik)::idum,jtot,npoin,nrad
+  integer(ik)::idum,jtot,npoin,nrad,counter=0
   character (len=80)::molname
 
 end Module global_variables

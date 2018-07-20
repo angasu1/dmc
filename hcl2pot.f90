@@ -314,7 +314,7 @@ Contains
          do 11 i=1,m
             pmm=-pmm*fct*somx2
  11         fct=fct+2d0
-         endif	
+         endif
 
 !     pmm refers to the l=m apleg, pmmp1 refers to l=m+1
          if(l.eq.m)then

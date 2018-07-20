@@ -22,6 +22,12 @@ Module dmc_cal
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
 !Programa que usa el metodo de DMC para calcular estados cuanticos! 
 !y la funcion de onda correspondiente para el complejo He_NH3     !
+!Variables:
+!y1,y2,y3:vectores unitarios que definen las direcciones de los ejes
+!principales de la molecula. En el caso de diatómicas, el vector y3 esta dirigido
+!a lo largo del eje de la misma
+!zcor: Coordenadas de los atomos de helio
+!xcor: Coordenadas del centro de masa de la molecula
 !!!!!!!!!!!!!!,xx,mass!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
 
 Contains
@@ -29,6 +35,7 @@ Contains
 Subroutine dmc_drv 
   real(rk)    :: media,sd
   integer(ik) :: icorrida,N,npaso,j,icontr
+  real(rk)::rr,req,th1d,th2d,taud,energy,emin
 
    allocate(y1(3,nw+delta_N_max,nmon),y2(3,nw+delta_N_max,nmon),y3(3,nw+delta_N_max,nmon))
    allocate(zcor(3,nw+delta_N_max,nhe),xcor(3,nw+delta_N_max,nmon))
@@ -42,6 +49,31 @@ Subroutine dmc_drv
        call rotcons_calculation
        call potparam
        if (nmon.gt.1) call potdimparam
+       A=10.406132287017446_rk*cm2har
+       B=10.406132287017446_rk*cm2har
+       diffccm=1.6732322591380111_rk*cm2har!OJO poniendo las mismas que David
+       call output_writing(1)
+
+
+       !!!!!!!!!!!!!!!DEBBUGING
+           !rr=3.746d0
+           !req=rr*ar2bo
+           !th1d=9.0d0
+           !th2d=89.9d0
+           !taud=180.0d0
+           !call pothcl2(rr,dcos(radian(th1d)),dcos(radian(th2d)),radian(taud),energy)
+           !write(*,*) 'energy',energy
+           !emin=-3.5887259757010264d0
+           !rr=3.650d0
+           !th1d=47.0d0
+           !th2d=133.0d0
+           !taud=180.0d0
+           !call pothcl2(rr,dcos(radian(th1d)),dcos(radian(th2d)),radian(taud),energy)
+           !call hf2pot(1.7445_rk,1.7404_rk,5.144_rk,9.00_rk,64.14_rk,180.00_rk,energy)
+           !write(*,*) 'energy',energy
+           !write(6,*) 'barrier',th1d,th2d,energy-emin
+           !stop
+           !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
  main_loop:  do icorrida=1,nruns
      
@@ -54,12 +86,21 @@ Subroutine dmc_drv
          npaso=1 
          er(0)=0d0 
          N=nw  
+
+         
        
         call initial_conditions(icorrida) 
 
        !Ciclo sobre todos los pasos temporales 
 
 steps:  do npaso=1,nstps
+
+      if (icorrida.eq.1) then
+        if (npaso.ge.nstps-1000) then
+        call dist_writing(N)
+        endif
+      endif
+
        !Se llama a la subrutina que efectúa la difusión
         call diffusion(npaso,N)
        !Se calcula el potencial de cada replica
@@ -71,7 +112,7 @@ steps:  do npaso=1,nstps
 
 
 !       !Se escriben los valores de la energía media final en cada corrida
-        write (100,*) erme_wn(icorrida)
+        write (300,*) erme_wn(icorrida)
 
 
 
@@ -208,6 +249,7 @@ End Subroutine dmc_drv
         else        
 
 !       !primero, se mueve el centro de masa de la molecula y el atomo de helio
+       !diffccm=1.6732_rk/har2cm
        do i=1,3 
        do jmon=1,nmon
        xcor(i,j,jmon)=xcor(i,j,jmon)+gasdev(idum)*dsqrt(dtau*2d0*diffccm)+Fq_x(i) 
@@ -266,7 +308,7 @@ End Subroutine dmc_drv
         !Euler angles calculation
       ! call euler(y1(:,j),y2(:,j),y3(:,j),phi,theta,psi)
 
-          !Potential Molecule-heliums
+          !Potential Molecule(s)-heliums
         sumpot=0.0_rk
           do jhe=1,nhe
              do jmon=1,nmon
@@ -281,11 +323,8 @@ End Subroutine dmc_drv
           sumpot=0.0_rk
              do jmon=1,nmon-1
                      do kmon=jmon+1,nmon
-                             rvec=xcor(:,j,kmon)-xcor(:,j,jmon)  
-                             rad=dsqrt(dot_product(rvec,rvec))
-                            !write(*,*) 'j=',j,jmon,kmon,y3(:,j,jmon),y3(:,j,kmon)
-                             call potdimer(j,y3(:,j,jmon),y3(:,j,kmon),rvec,rad,potdim&
-                                    &,xcor(:,j,kmon),xcor(:,j,jmon))
+                             call potdimer(j,y3(:,j,jmon),y3(:,j,kmon)&
+                                    &,xcor(:,j,jmon),xcor(:,j,kmon),potdim)
                              sumpot=sumpot+potdim/har2cm
                       enddo
               enddo
@@ -309,12 +348,12 @@ End Subroutine dmc_drv
 
       pot(j)=pot(j)+sumpot
 
-      if (state.ne.0) then
-      call wvfunct(phi,theta,psi,j,mod(npaso,2))
-      endif
-      signo(j)=fonda(j,1)*fonda(j,0)
+     !if (state.ne.0) then
+     !call wvfunct(phi,theta,psi,j,mod(npaso,2))
+     !endif
+     !signo(j)=fonda(j,1)*fonda(j,0)
 
-       if (npaso.ge.nstps-100/nruns) call dist_writing(npaso,rrot)
+
        Enddo 
       
         return 
@@ -322,15 +361,36 @@ End Subroutine dmc_drv
 
 
 
-        subroutine dist_writing(npaso,rrot)
-          integer(ik),intent(in)::npaso      
-          real(rk),intent(in)::rrot(3)
-          real(rk)::rg,thetag,phig 
-      !Creacion del archivo de distribuciones
-       rg=dsqrt(dot_product(rrot,rrot))
-       thetag=dacos(rrot(3)/rg)
-       phig=datan(rrot(2)/rrot(1))
-       write(250,1000) rrot(1),rrot(2),rrot(3),rg,phig,thetag
+        subroutine dist_writing(N)
+          integer(ik),intent(in)::N      
+          integer(ik)::jmon,kmon,j,nwrit
+          real(rk)::ri(3),rj(3),rij(3),rad,xx(3,2*nmon),avgxx(3,2*nmon)
+          real(rk)::ct1,ct2,ph
+
+      !Calculation of all the configurations
+      
+      avgxx=0.0_rk
+      nwrit=100 !Number of configurations to write for each step in file dist*.xyz
+
+      do j=1,N    
+          
+       do jmon=1,nmon-1
+         do kmon=jmon+1,nmon
+                  ri=y3(:,j,jmon)          
+                  rj=y3(:,j,kmon)          
+                  rij=(xcor(:,j,kmon)-xcor(:,j,jmon))*bo2ar
+                  rad=norm(rij)
+            call cartesian_coords_conv(ri,rj,rij,rad,xx)
+         enddo
+       enddo
+
+            avgxx=avgxx+xx
+      enddo
+            avgxx=avgxx/dfloat(N)
+            call write_xyz(500,2,att%nom,avgxx)
+
+          
+           
 
 1000 format(7(F10.4))        
 
@@ -464,7 +524,7 @@ End Subroutine dmc_drv
          erme_wn2=erme2*har2cm 
 
 
-         if (npaso.gt.dfloat(nstps/2)) Then 
+         if (npaso.gt.min(20000,nstps/2)) Then 
          ermedia=ermedia+er(npaso) 
          erme=ermedia/(dfloat(npaso)-dfloat(nstps/2)) 
          erme_wn(icorrida)=erme*har2cm 
@@ -472,6 +532,7 @@ End Subroutine dmc_drv
          er_wn=er(npaso)*har2cm 
          if (Abs(dfloat(Int(npaso/100))-dfloat(npaso)/100d0).lt.1d-10) Then 
          write(6,55) npaso,er_wn,erme_wn(icorrida),erme_wn2,ikount,icorrida 
+         write(100,55) npaso,er_wn,erme_wn(icorrida),erme_wn2,ikount,icorrida 
          endif 
 
        55 format (I6,2x,3(F14.8,2x),I6,2x,I2)
@@ -494,11 +555,11 @@ End Subroutine dmc_drv
        do j=1,nruns
        sd=sd+(erme_wn(j)-media)**2
        enddo       
-       sd=sqrt(sd/(nruns-1))
+       sd=sqrt(sd/(nruns))
        
-       write (300,1000) media,sd,nruns
+       write (600,1000) nruns,media,sd
 
-1000  Format(2(F14.6,2x),I2)
+1000  Format('After ',I3,'runs, the mean energy is',F10.4,'+/-',F10.4,' cm-1')
 
        return 
 
@@ -816,15 +877,33 @@ End Subroutine dmc_drv
                      
 
                   end Subroutine euler
-        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-            function rdis(a,b)
-            real(rk)::rdis,a(3),b(3),c(3)
+           Subroutine output_writing(ind)
+           integer(ik),intent(in)::ind
+           integer(ik)::i
 
-            c=b-a
-            rdis=dsqrt(dot_product(c,c))
-               
-            return
-            end function rdis
+           Select case (ind)
+           case(1)
+           write(600,1000) trim(molname)
+           write(600,*) 
+           write(600,*) 'Physical Properties:'
+           write(600,*) 
+           write(600,2000) diffccm*har2cm
+           do i=1,nhe
+           write(600,3000) diffcHe*har2cm
+           enddo
+           write(600,4000) A*har2cm,B*har2cm,C*har2cm
+           case default
+            write(*,*) 'molname ',trim(molname),' not recognized'
+            stop
+           end Select
+
+1000   format(' Molecule name:',2x,A)
+2000   format(' Molecule diffusion constant(cm-1):',2x,F18.10)
+3000   format(' He diffusion constant(cm-1):',2x,F18.10)
+4000   format(' Rotational  constants(cm-1):',3(2x,F18.10))
+
+
+           end subroutine output_writing        
 
             end Module dmc_cal
