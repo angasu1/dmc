@@ -310,11 +310,12 @@ Contains
                &//trim(cdtau)//'dt'//trim(cis)//'.dat'
            write(*,*) nombre
            write(*,*) trim(indir)
-          open (unit=100,POSITION='append',file=trim(indir)//'/en'//trim(nombre))
+          open (unit=100,file=trim(indir)//'/en'//trim(nombre))
           open (unit=250,file=trim(indir)//'/dist'//trim(nombre))
-          open (unit=300,POSITION='append',file=trim(indir)//'/enm'//trim(nombre))
+          open (unit=300,file=trim(indir)//'/enm'//trim(nombre))
           open (unit=400,file=trim(indir)//'/idist'//trim(nombre))
           open (unit=500,file=trim(indir)//'/config.xyz')
+          open (unit=600,file=trim(indir)//'/output.dat')
        end Select
 
       end subroutine results_file_opening
