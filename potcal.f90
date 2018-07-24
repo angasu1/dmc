@@ -104,28 +104,31 @@
       call calculated_angles(ric,rjc,rvecc,radc,ctheta1c,ctheta2c,phic,cart_coorc)
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !David`s conversion of coordinates
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    ! xa=ri(1)+xcm1(1)
-    ! ya=ri(2)+xcm1(2)
-    ! za=ri(3)+xcm1(3)
-    ! xb=rj(1)+xcm2(1)
-    ! yb=rj(2)+xcm2(2)
-    ! zb=rj(3)+xcm2(3)
-    ! xcoma=xcm1(1)
-    ! ycoma=xcm1(2)
-    ! zcoma=xcm1(3)
-    ! xcomb=xcm2(1)
-    ! ycomb=xcm2(2)
-    ! zcomb=xcm2(3)
-    !    call angs(xa,ya,za,xb,yb,zb,xcoma,ycoma,zcoma,xcomb,ycomb,zcomb,j,&
-    !   &tha2,thb2,pha2,phb2,ph)
-    !  ctheta1c=dcos(tha2)
-    !  ctheta2c=dcos(thb2)
-    !  phic=ph
+     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+     !xa=ri(1)+xcm1(1)
+     !ya=ri(2)+xcm1(2)
+     !za=ri(3)+xcm1(3)
+     !xb=rj(1)+xcm2(1)
+     !yb=rj(2)+xcm2(2)
+     !zb=rj(3)+xcm2(3)
+     !xcoma=xcm1(1)
+     !ycoma=xcm1(2)
+     !zcoma=xcm1(3)
+     !xcomb=xcm2(1)
+     !ycomb=xcm2(2)
+     !zcomb=xcm2(3)
+     !   call angs(xa,ya,za,xb,yb,zb,xcoma,ycoma,zcoma,xcomb,ycomb,zcomb,j,&
+     !  &tha2,thb2,pha2,phb2,ph)
+     ! ctheta1c=dcos(tha2)
+     ! ctheta2c=dcos(thb2)
+     ! phic=ph
 
-      !!!!!!!!!!!!Checking part!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-     !if (abs(norm(ri)-1.0_rk).gt.1.0e-10_rk) stop 'norma1!!'
-     !if (abs(norm(rj)-1.0_rk).gt.1.0e-10_rk) stop 'norma2!!'
+     !!!!!!!!!!!!!Checking part!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      if (abs(norm(ri)-1.0_rk).gt.1.0e-10_rk) stop 'norma1!!'
+      if (abs(norm(rj)-1.0_rk).gt.1.0e-10_rk) stop 'norma2!!'
+      if (j.eq.1) then
+       call write_xyz(500,2,att%nom,cart_coor)
+      endif 
 
      ! if  (abs(ctheta1-ctheta1c).gt.tol) stop 'theta1'
      ! if  (abs(ctheta2-ctheta2c).gt.tol) stop 'theta2'
@@ -136,6 +139,18 @@
      !  error=abs(deg(phi)-360.0_rk+deg(phic))
      !endif
 
+     ! If (counter.lt.100) then
+     !        counter=counter+1
+     !        if (counter.eq.99) stop 'counter'
+     !        write(234,1000) xcm1
+     !        write(234,1000) xcm2
+     !        write(234,1000) ri
+     !        write(234,1000) rj
+     !        write(234,1000) deg(dacos(ctheta1)),deg(dacos(ctheta2)),deg(phi),rvec,rad
+     !        write(234,1000) deg(dacos(ctheta1c)),deg(dacos(ctheta2c)),deg(phic),rvecc,radc
+     !        write(234,*)
+1000 format (*(f18.10,3x))
+     ! endif
 
       !!!!!!!!!!!!!!!!End of checking!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -154,7 +169,7 @@
          !write(*,*) 'atila',potdim
          case('hcl')
            !ctheta1=dcos(9.0_rk*pi/180.0_rk);ctheta2=dcos(89.0_rk*pi/180.0_rk);phi=180.0_rk     
-         call pothcl2(rad*0.52917725_rk,ctheta1c,ctheta2c,phic,potdim)
+         call pothcl2(rad*bo2ar,ctheta1c,ctheta2c,phic,potdim)
         !call pothcl2(rad,ctheta1,ctheta2,phi,potdim)
            !write(*,*) 'rad',rad,ctheta1,ctheta2,phi,potdim
            !stop
@@ -168,8 +183,8 @@
             end subroutine potdimer
        
            subroutine calculated_angles(ri,rj,rij,rad,ct1,ct2,ph,xx)
-           real(rk),intent(in)::ri(3),rj(3),rij(3),rad
-           real(rk)::xx(3,2*nmon),ct1,ct2,ph,ph1,ph2,fac1,fac2
+           real(rk)::ri(3),rj(3),rij(3),rad
+           real(rk)::xx(3,4),ct1,ct2,ph,ph1,ph2,fac1,fac2
            real(rk)::phrot,throt
 
            fac1=-(att(1)%ma*requil/mtot)
@@ -228,7 +243,6 @@
 
       rvec=xcm1-xcm2  
       rad=norm(rvec)
-      !return !OJO
       ctheta1=dot_product(rvec,ri)/rad
       ctheta2=dot_product(rvec,rj)/rad
       temp1=cross_unitary(ri,rvec)
@@ -332,43 +346,6 @@
 
 return
 end subroutine angs
-
-           subroutine cartesian_coords_conv(ri,rj,rij,rad,xx)
-           real(rk),intent(in)::ri(3),rj(3),rij(3),rad
-           real(rk)::xx(3,2*nmon)
-           real(rk)::phrot,throt,fac1,fac2
-
-           fac1=-(att(1)%ma*requil/mtot)
-           fac2=fac1+requil
-
-     !Rotation to the system
-             phrot=datan2(-rij(2),rij(1))
-             throt=dacos(rij(3)/norm(rij))
-             throt=pi/2.0_rk-throt
-
-            !write(*,*) 'rij ant',rij
-             call rotz(rij,-phrot)
-             call rotz(ri,-phrot)
-             call rotz(rj,-phrot)
-            !write(*,*) 'rij desp',rij
-             call roty(rij,throt)
-             call roty(ri,throt)
-             call roty(rj,throt)
-            !write(*,*) 'rij desp2',rij
-            !stop
-
-
-
-     !Calculation of cartesian coords
-       xx(:,1)=fac2*ri-rij/2.0_rk
-       xx(:,2)=fac1*ri-rij/2.0_rk
-       xx(:,3)=fac2*rj+rij/2.0_rk
-       xx(:,4)=fac1*rj+rij/2.0_rk
-
-
-
-       return
-       end subroutine cartesian_coords_conv
 
 
     end Module pot_calculation

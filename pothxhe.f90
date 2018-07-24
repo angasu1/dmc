@@ -10,7 +10,7 @@ module pothx
    real(rk), dimension (2,2)::c 
    real(rk), dimension (0:3,0:l)::g 
    real(rk), dimension (0:l)::F 
-   real(rk),parameter::bo2ar=0.5291772_rk
+   real(rk),parameter::bo2arvar=0.5291772_rk
    Integer(ik):: fact(0:7) 
 
 
@@ -69,7 +69,7 @@ module pothx
       real(rk)::x2,x3,x4,x5,bb,dd,gg,xf,ra,r2,r6,r7
       integer(ik)::i
 !     
-      ra=r*bo2ar
+      ra=r*bo2arvar
       x2=x*x;x3=x2*x;x4=x2*x2;x5=x4*x
       F=(/1._rk ,x ,0.5_rk*(3._rk*(x2)-1_rk) ,0.5_rk*(5._rk*(x3)-3._rk*x) ,&
       &(1._rk/8._rk)*(35._rk*(x4)-30._rk*(x2)+3._rk) ,(1._rk/8._rk)*(63._rk*&

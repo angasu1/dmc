@@ -813,15 +813,6 @@ end subroutine calculate_at_number
 
        end function deg       
 
-      function radian(x)
-       real(rk)::pi,radian,x
-        pi=dacos(-1.0_rk)
-
-        radian=x*pi/180.0_rk
-
-       end function radian       
-
-
 
    subroutine histogram(vec,ndim,ndiv,hist)
     !Given a vector of dimension ndim, it creates and histogram

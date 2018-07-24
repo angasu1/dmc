@@ -273,7 +273,7 @@ Contains
         endif
       endif
       if (abs(x-0.6819).lt.0.1_rk) then
-      write(200,1000) l,m
+     !write(200,1000) l,m
       endif
 1000 format(2(I6,3x),2(f18.10))      
       return
@@ -314,7 +314,7 @@ Contains
          do 11 i=1,m
             pmm=-pmm*fct*somx2
  11         fct=fct+2d0
-         endif
+         endif	
 
 !     pmm refers to the l=m apleg, pmmp1 refers to l=m+1
          if(l.eq.m)then
