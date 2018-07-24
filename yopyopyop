@@ -180,45 +180,41 @@
             end subroutine potdimer
        
            subroutine calculated_angles(ri,rj,rij,rad,ct1,ct2,ph,xx)
-           real(rk),intent(in)::ri(3),rj(3),rij(3),rad
-           real(rk)::ric(3),rjc(3),rijc(3)
-           real(rk)::xx(3,2*nmon),ct1,ct2,ph,ph1,ph2,fac1,fac2
+           real(rk)::ri(3),rj(3),rij(3),rad
+           real(rk)::xx(3,4),ct1,ct2,ph,ph1,ph2,fac1,fac2
            real(rk)::phrot,throt
 
            fac1=-(att(1)%ma*requil/mtot)
            fac2=fac1+requil
-           ric=ri
-           rjc=rj
-           rijc=rij
 
      !Rotation to the system
-             phrot=datan2(-rijc(2),rijc(1))
-             throt=dacos(rijc(3)/norm(rijc))
+             phrot=datan2(-rij(2),rij(1))
+             throt=dacos(rij(3)/norm(rij))
              throt=pi/2.0_rk-throt
 
             !write(*,*) 'rij ant',rij
-             call rotz(rijc,-phrot)
-             call rotz(ric,-phrot)
-             call rotz(rjc,-phrot)
+             call rotz(rij,-phrot)
+             call rotz(ri,-phrot)
+             call rotz(rj,-phrot)
             !write(*,*) 'rij desp',rij
-             call roty(rijc,throt)
-             call roty(ric,throt)
-             call roty(rjc,throt)
+             call roty(rij,throt)
+             call roty(ri,throt)
+             call roty(rj,throt)
             !write(*,*) 'rij desp2',rij
             !stop
 
 
 
      !Calculation of cartesian coords
-       xx(:,1)=fac2*ric-rijc/2.0_rk
-       xx(:,2)=fac1*ric-rijc/2.0_rk
-       xx(:,3)=fac2*rjc+rijc/2.0_rk
-       xx(:,4)=fac1*rjc+rijc/2.0_rk
+       xx(:,1)=fac2*ri-rij/2.0_rk
+       xx(:,2)=fac1*ri-rij/2.0_rk
+       xx(:,3)=fac2*rj+rij/2.0_rk
+       xx(:,4)=fac1*rj+rij/2.0_rk
 
 
      !Angles for potential calculation
-      ct1=dot_product(ric,rijc)/norm(rijc)
-      ct2=dot_product(rjc,rijc)/norm(rijc)
+      ct1=dot_product(ri,rij)/norm(rij)
+      ct2=dot_product(rj,rij)/norm(rij)
 
       !phi, method 1
      !temp1=cross_unitary(ri,rij)
@@ -227,8 +223,8 @@
      !ph=dacos(cphi)
 
       !Phi method 2
-      ph1=datan2(ric(2),ric(3))
-      ph2=datan2(rjc(2),rjc(3))
+      ph1=datan2(ri(2),ri(3))
+      ph2=datan2(rj(2),rj(3))
       ph=abs(ph1-ph2)
                    
 
