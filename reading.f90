@@ -48,6 +48,7 @@ Contains
 
 
 
+
       mtot=0.0_rk
       do j=1,n_at+nhe
        call props_assignment(att(j)%nom,j)
@@ -161,6 +162,7 @@ Contains
              call value(args(2),nhe,ierror)    
           elseif (trim(args(1)).eq."nmon") then
              call value(args(2),nmon,ierror)    
+                  n_at=nmon*n_at  
           elseif (trim(args(1)).eq."is") then
                   is=.true.
           elseif (trim(args(1)).eq."state") then
@@ -262,16 +264,25 @@ Contains
    subroutine reading_coords
            integer(ik)::i,j,nn
            
+          !write(*,*) 'n_at',nn,int(dfloat(n_at)/dfloat(nmon))
            read(30,*) nn
-           if (nn.ne.n_at) stop 'n_at wrong in in_conf.xyz'
+           if (nn.ne.int(dfloat(n_at)/dfloat(nmon))) stop 'n_at wrong in in_conf.xyz'
            read(30,*)
 
-           do i=1,n_at
+           do i=1,nn
            read(30,*) att(i)%nom,coor(:,i)
            enddo
            requil=rad(coor(:,1),coor(:,2))
             
            close(30)
+
+           if (nmon.gt.1) then
+                   do i=2,nmon
+                       do j=1,nn       
+                        att((i-1)*nn+j)%nom=att(j)%nom
+                       enddo
+                   enddo
+           endif
 
            do i=1,nhe
            att(n_at+i)%nom='He'

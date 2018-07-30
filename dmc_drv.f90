@@ -86,6 +86,7 @@ Subroutine dmc_drv
          npaso=1 
          er(0)=0d0 
          N=nw  
+         fonda=0.0_rk
        
         call initial_conditions(icorrida) 
 
@@ -104,6 +105,14 @@ steps:  do npaso=1,nstps
        !Se calcula el potencial de cada replica
         pot=0d0
         call potential_calculation(npaso,N,icontr) 
+
+        if (icorrida.eq.1) then    
+           if (npaso.ge.min(20000,nstps/2)) then
+             if (mod(npaso,100).eq.0) then
+              call dist_writing(N)
+             endif
+           endif
+        endif
 !       !Se llama a la subrutina que efectúa los procesos de vida o muerte
         call branch(npaso,N,icorrida) 
         enddo steps
@@ -228,7 +237,7 @@ End Subroutine dmc_drv
         
         if (simtyp.eq.2) then
                 do jhe=1,nhe 
-                rvec_he=zcor(:,j,jhe)-xcor(:,j,1)        
+       rvec_he=zcor(:,j,jhe)-xcor(:,j,1)        
        Phix=dsqrt(2d0*dtau*diffcHe)*gasdev(idum)!*0d0 
        Phiy=dsqrt(2d0*dtau*diffcHe)*gasdev(idum)!*0d0 
        Phiz=dsqrt(2d0*dtau*diffcHe)*gasdev(idum)!*0d0 
@@ -260,25 +269,25 @@ End Subroutine dmc_drv
 
        do jmon=1,nmon
 !       !Ahora se calculan los angulos para rotar la molecula
-       Phix=dsqrt(2d0*dtau*A)*gasdev(idum)!*0.0_rk 
-       Phiy=dsqrt(2d0*dtau*B)*gasdev(idum)!*0.0_rk
-       if (moltyp.gt.2) Phiz=dsqrt(2.0_rk*dtau*C)*gasdev(idum)!*0d0 
-       
-!       !Se llama a la subrutina que efectua la rotacion 
-!        
-!       !2a-Se rota la molecula con respecto al ejex molecular un angulo phix 
-       call rotacion(y1(1,j,jmon),Y1(2,j,jmon),Y1(3,j,jmon),y3(1,j,jmon),y3(2,j,jmon),y3(3,j,jmon),phix) 
-       call rotacion(y1(1,j,jmon),Y1(2,j,jmon),Y1(3,j,jmon),y2(1,j,jmon),y2(2,j,jmon),y2(3,j,jmon),phix) 
-!        
-!       !2b-se rota la molecula con respecto al ejey molecular un angulo phiy 
-       call rotacion(y2(1,j,jmon),Y2(2,j,jmon),Y2(3,j,jmon),y3(1,j,jmon),y3(2,j,jmon),y3(3,j,jmon),phiy) 
-       call rotacion(y2(1,j,jmon),Y2(2,j,jmon),Y2(3,j,jmon),y1(1,j,jmon),y1(2,j,jmon),y1(3,j,jmon),phiy) 
-!        
-!       !2c-se rota la molecula con respecto al ejez molecular un angulo phiz 
-       if (moltyp.gt.2) then
-       call rotacion(y3(1,j,jmon),Y3(2,j,jmon),Y3(3,j,jmon),y1(1,j,jmon),y1(2,j,jmon),y1(3,j,jmon),phiz) 
-       call rotacion(y3(1,j,jmon),Y3(2,j,jmon),Y3(3,j,jmon),y2(1,j,jmon),y2(2,j,jmon),y2(3,j,jmon),phiz)
-       endif
+          Phix=dsqrt(2d0*dtau*A)*gasdev(idum)!*0.0_rk 
+          Phiy=dsqrt(2d0*dtau*B)*gasdev(idum)!*0.0_rk
+          if (moltyp.gt.2) Phiz=dsqrt(2.0_rk*dtau*C)*gasdev(idum)!*0d0 
+          
+!          !Se llama a la subrutina que efectua la rotacion 
+!           
+!          !2a-Se rota la molecula con respecto al ejex molecular un angulo phix 
+          call rotacion(y1(1,j,jmon),Y1(2,j,jmon),Y1(3,j,jmon),y3(1,j,jmon),y3(2,j,jmon),y3(3,j,jmon),phix) 
+          call rotacion(y1(1,j,jmon),Y1(2,j,jmon),Y1(3,j,jmon),y2(1,j,jmon),y2(2,j,jmon),y2(3,j,jmon),phix) 
+!           
+!          !2b-se rota la molecula con respecto al ejey molecular un angulo phiy 
+          call rotacion(y2(1,j,jmon),Y2(2,j,jmon),Y2(3,j,jmon),y3(1,j,jmon),y3(2,j,jmon),y3(3,j,jmon),phiy) 
+          call rotacion(y2(1,j,jmon),Y2(2,j,jmon),Y2(3,j,jmon),y1(1,j,jmon),y1(2,j,jmon),y1(3,j,jmon),phiy) 
+!           
+!          !2c-se rota la molecula con respecto al ejez molecular un angulo phiz 
+          if (moltyp.gt.2) then
+          call rotacion(y3(1,j,jmon),Y3(2,j,jmon),Y3(3,j,jmon),y1(1,j,jmon),y1(2,j,jmon),y1(3,j,jmon),phiz) 
+          call rotacion(y3(1,j,jmon),Y3(2,j,jmon),Y3(3,j,jmon),y2(1,j,jmon),y2(2,j,jmon),y2(3,j,jmon),phiz)
+          endif
        enddo
       
    
@@ -293,16 +302,19 @@ End Subroutine dmc_drv
      !!Subrutina que calcula el potencial de cada una de las réplicas!!
      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        Subroutine potential_calculation(npaso,N,icontr)
-        real (rk) :: phi,theta,psi,rhehe,vvhehe,v_molhe,sumpot      
+        real (rk) :: theta,psi,rhehe,vvhehe,v_molhe,sumpot      
         real (rk) :: phig,thetag,rg,xvec(3),rad,potdim      
         real (rk),dimension(3)::rrot,rrotb,rvec
         real(rk):: rhe(3,nw+delta_N_max,nhe)
         integer(ik) :: j,jhe,jmon,kmon,khe,icontr,npaso
         integer(ik),intent(in)::N 
-        real(rk)::xcmass(3)
+        real(rk)::xcmass(3),cth,ctha,cthb,phi
 
+       
+        
 
         do j=1,N
+      !if (.false.) then !OJO
         !Euler angles calculation
       ! call euler(y1(:,j),y2(:,j),y3(:,j),phi,theta,psi)
 
@@ -310,7 +322,7 @@ End Subroutine dmc_drv
         sumpot=0.0_rk
           do jhe=1,nhe
              do jmon=1,nmon
-             call potcalc(y1(:,j,jmon),y2(:,j,jmon),y3(:,j,jmon),xcor(:,j,jmon),zcor(:,j,jhe),v_molhe)
+             call potcalc(y1(:,j,jmon),y2(:,j,jmon),y3(:,j,jmon),xcor(:,j,jmon),zcor(:,j,jhe),cth,v_molhe)
              sumpot=sumpot+v_molhe/har2cm
              enddo
           enddo
@@ -322,7 +334,7 @@ End Subroutine dmc_drv
              do jmon=1,nmon-1
                      do kmon=jmon+1,nmon
                              call potdimer(j,y3(:,j,jmon),y3(:,j,kmon)&
-                                    &,xcor(:,j,jmon),xcor(:,j,kmon),potdim)
+                                    &,xcor(:,j,jmon),xcor(:,j,kmon),ctha,cthb,phi,potdim)
                              sumpot=sumpot+potdim/har2cm
                       enddo
               enddo
@@ -346,13 +358,18 @@ End Subroutine dmc_drv
 
       pot(j)=pot(j)+sumpot
 
-     !if (state.ne.0) then
-     !call wvfunct(phi,theta,psi,j,mod(npaso,2))
      !endif
-     !signo(j)=fonda(j,1)*fonda(j,0)
+     !pot(j)=0.0_rk !OJO
+
+      signo(j)=1.0_rk
+      if (state.ne.0) then
+        if (nmon.eq.1) ctha=y3(3,j,1)
+        call wvfunct(ctha,cthb,phi,j,mod(npaso,2))
+        signo(j)=fonda(j,1)*fonda(j,0)
+      endif
 
 
-       if (npaso.ge.nstps-100/nruns) call dist_writing(N)
+     
        Enddo 
       
         return 
@@ -362,31 +379,41 @@ End Subroutine dmc_drv
 
         subroutine dist_writing(N)
           integer(ik),intent(in)::N      
-          integer(ik)::jmon,kmon,j,nwrit
-          real(rk)::ri(3),rj(3),rij(3),rad,xx(3,2*nmon),avgxx(3,2*nmon)
-          real(rk)::ct1,ct2,ph
+          integer(ik)::jmon,kmon,j,k
+          real(rk)::ri(3),rj(3),rij(3),rad,xx(3,2*nmon+nhe),avgxx(3,2*nmon+nhe)
+          real(rk)::ct1,ct2,ph,xxmon(3,nmon),zhe(3,nhe),rhe(nmon,nhe),thhe(nmon,nhe)
 
       !Calculation of all the configurations
       
       avgxx=0.0_rk
-      nwrit=100 !Number of configurations to write for each step in file dist*.xyz
 
       do j=1,N    
           
-       do jmon=1,nmon-1
-         do kmon=jmon+1,nmon
-                  ri=y3(:,j,jmon)          
-                  rj=y3(:,j,kmon)          
-                  rij=(xcor(:,j,kmon)-xcor(:,j,jmon))*bo2ar
-                  rad=norm(rij)
-            call cartesian_coords_conv(ri,rj,rij,rad,xx)
-         enddo
-       enddo
+                !For the moment this is only implemented for a maximum of
+                !two monomers
 
-            avgxx=avgxx+xx
+                  ri=y3(:,j,1)          
+                   if (nmon.eq.2) then
+                   rj=y3(:,j,2)          
+                   rij=(xcor(:,j,kmon)-xcor(:,j,jmon))*bo2ar
+                   rad=norm(rij)
+                   endif
+                   do k=1,nmon
+                   xxmon(:,k)=xcor(:,j,k)
+                   enddo
+                   do k=1,nhe        
+                   zhe(:,k)=zcor(:,j,k)
+                   enddo
+
+          call cartesian_coords_conv(ri,rj,rij,rad,xx,xxmon,zhe,rhe,thhe)
+
+
+                
+          avgxx=avgxx+xx
+
       enddo
             avgxx=avgxx/dfloat(N)
-            call write_xyz(500,2,att%nom,avgxx)
+            call write_xyz(500,2*nmon+nhe,att%nom,avgxx)
 
           
            
@@ -424,13 +451,12 @@ End Subroutine dmc_drv
        Else
        Eloc(j)=0.0_rk
        Endif
-        !write(*,*) 'eloc',eloc(j)
-        !stop
-
        Eloc(j)=Eloc(j)+pot(j) 
 
+
        W=dexp(-(Eloc(j)-Er(npaso-1))*dtau) 
-!        
+
+         
        aleat=ran2(idum)
        If(W+aleat.gt.3d0) Then 
        mbranch=3 
@@ -438,25 +464,18 @@ End Subroutine dmc_drv
        mbranch=Int(W+aleat) 
        Endif 
 
-       If (signo(j).lt.0d0) mbranch=0 
+       If (signo(j).lt.0.0_rk) mbranch=0 
 
-!       If (mod(npaso,2).ne.0) then
-!       nnn=1
-!       Else
-!       nnn=2
-!       endif
-
-
-        
                                  
-             ikount=ikount+mbranch
+            ikount=ikount+mbranch
+
 
           !Si se excede el numero maximo de caminantes permitido, se para 
             If (ikount.gt.nw+delta_N_max) Then 
             stop 'Mas caminantes que los permitidos'  
             endif
 
-             do nn=ikount-mbranch+1,ikount  
+           do nn=ikount-mbranch+1,ikount  
              potnew(nn)=pot(j) 
 
             kk=mod(npaso,2)
@@ -505,19 +524,16 @@ End Subroutine dmc_drv
          
         !Aqui se calcula la nueva energia de referencia para el proximo paso 
           
-          sumpotential=0d0 
 
-          do j=1,ikount 
-          sumpotential=sumpotential+pot(j) 
-          enddo 
+           sumpotential=sum(pot)/dfloat(ikount)  
 
-          sumpotential=sumpotential/dfloat(ikount) 
+
 
           N=ikount 
         
          term = dfloat(N)/dfloat(nw) 
-         alphar = 1.d0/dtau 
-         er(npaso) = sumpotential + alphar*(1.d0-term)         
+         alphar = 1.0_rk/dtau 
+         er(npaso) = sumpotential + alphar*(1.0_rk-term)         
          ermedia2=ermedia2+er(npaso)
          erme2=ermedia2/dfloat(npaso)
          erme_wn2=erme2*har2cm 
@@ -525,11 +541,11 @@ End Subroutine dmc_drv
 
          if (npaso.gt.min(20000,nstps/2)) Then 
          ermedia=ermedia+er(npaso) 
-         erme=ermedia/(dfloat(npaso)-dfloat(nstps/2)) 
+         erme=ermedia/(dfloat(npaso)-dfloat(min(20000,nstps/2))) 
          erme_wn(icorrida)=erme*har2cm 
          endif 
          er_wn=er(npaso)*har2cm 
-         if (Abs(dfloat(Int(npaso/100))-dfloat(npaso)/100d0).lt.1d-10) Then 
+         if (Abs(dfloat(Int(npaso/100))-dfloat(npaso)/100_rk).lt.1.0e-10_rk) Then 
          write(6,55) npaso,er_wn,erme_wn(icorrida),erme_wn2,ikount,icorrida 
          write(100,55) npaso,er_wn,erme_wn(icorrida),erme_wn2,ikount,icorrida 
          endif 
@@ -544,8 +560,8 @@ End Subroutine dmc_drv
    real (rk):: dato,media,sd
    integer:: j
    
-       media=0d0
-       sd=0d0
+       media=0.0_rk
+       sd=0.0_rk
        
        do j=1,nruns
        media=media+erme_wn(j)
@@ -565,20 +581,17 @@ End Subroutine dmc_drv
        End subroutine write_emedia
      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
      
-        subroutine wvfunct(phi,theta,psi,j,ind)
-        real (rk)::phi,theta,psi
+        subroutine wvfunct(ctha,cthb,phi,j,ind)
+        real (rk)::phi,ctha,cthb
         integer::ind,j
          
-         !fonda(j,ind)=0d0
          if (state.eq.1) then
-         fonda(j,ind)=dcos(theta)
-         return
+         fonda(j,ind)=ctha
          endif
+
+
+         return
          
-         if (state.eq.2) then
-         fonda(j,ind)=dsin(theta)*dcos(phi)
-         return
-         endif
      
         end subroutine wvfunct
      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
@@ -695,18 +708,14 @@ End Subroutine dmc_drv
               
 
                DO k=1,nhe
-                       !Rcords=xcor(:,j)-zcor(:,j,k)
+                        Rcords=xcor(:,j,1)-zcor(:,j,k)
                         R=DSQRT(DOT_PRODUCT(Rcords,Rcords))
 
-                        DO kk=1,3 
-                       !FDER(kk,k)=(xcor(kk,j)-zcor(kk,j,k))*(5.d0*cc/R**7-aa/R)
-                        ENDDO
+                        FDER(:,k)=(xcor(:,j,1)-zcor(:,j,k))*(5.d0*cc/R**7-aa/R)
                ENDDO
 
                DO k=1,nhe
-                  DO kk=1,3
-                  Fq_z(kk,k)=-dtau/mHe*FDER(kk,k)
-                  ENDDO   
+                  Fq_z(:,k)=-dtau/mHe*FDER(:,k)
                ENDDO
 
               
@@ -732,7 +741,7 @@ End Subroutine dmc_drv
         ekinetiche=0d0
 
        do k=1,nhe
-          !Rcords=xcor(:,j)-zcor(:,j,k) 
+           Rcords=xcor(:,j,1)-zcor(:,j,k) 
            R=DSQRT(DOT_PRODUCT(Rcords,Rcords))  
             
        do kk=1,3
@@ -740,7 +749,7 @@ End Subroutine dmc_drv
         
 
         do kkk=1,nhe
-           !rkk=xcor(:,j)-zcor(:,j,kkk) 
+            rkk=xcor(:,j,1)-zcor(:,j,kkk) 
             Rkkk=DSQRT(DOT_PRODUCT(rkk,rkk)) 
            suma=suma+dfx(rkkk,kk,kkk,j)
         enddo  
@@ -781,7 +790,7 @@ End Subroutine dmc_drv
         Real (rk)::rr
         integer::kder,jhe,j
 
-       !dfx=df(rr)*(xcor(kder,j)-zcor(kder,j,jhe))/rr
+        dfx=df(rr)*(xcor(kder,j,1)-zcor(kder,j,jhe))/rr
 
         endfunction dfx
 
@@ -790,7 +799,7 @@ End Subroutine dmc_drv
            Real (rk)::rr,dif
           integer::kder,jhe,j
 
-       !dif=xcor(kder,j)-zcor(kder,j,jhe)
+        dif=xcor(kder,j,1)-zcor(kder,j,jhe)
         d2fx=d2f(rr)*(dif**2)/rr**2+df(rr)*(1-dif**2/rr**2)/rr
 
         endfunction d2fx

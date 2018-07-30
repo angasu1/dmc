@@ -310,15 +310,12 @@
           real(rk)::xx(3,2*nat)
           character(len=2)::atyp(nat)
  
-          write(nfile,*) 2*nat
+          write(nfile,*) nat
           write(nfile,*) 
  
-         do i=1,nat
-             write(nfile,1000) atyp(i),(xx(j,i),j=1,3)
-         enddo
 
          do i=1,nat
-             write(nfile,1000) atyp(i),(xx(j,i+2),j=1,3)
+             write(nfile,1000) atyp(i),(xx(j,i),j=1,3)
          enddo
 
  1000    format(A,3(F20.6))

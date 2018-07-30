@@ -8,7 +8,7 @@
 
       Contains
 
-      subroutine potcalc(y1,y2,y3,x,z,V)
+      subroutine potcalc(y1,y2,y3,x,z,cthet,V)
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!      
         !Subroutine that calculates the potential for different molecules
         !it gets the cartesian coordinates for the centerofmass-He distance in A. and
@@ -85,7 +85,7 @@
 
       end subroutine potdimparam
 
-     subroutine potdimer(j,ri,rj,xcm1,xcm2,potdim)
+     subroutine potdimer(j,ri,rj,xcm1,xcm2,ctheta1c,ctheta2c,phic,potdim)
       integer(ik),intent(in)::j
       real(rk),intent(in)::ri(3),rj(3),xcm1(3),xcm2(3)
       real(rk)::potdim,ctheta1,ctheta2,phi
@@ -348,14 +348,17 @@
 return
 end subroutine angs
 
-           subroutine cartesian_coords_conv(ri,rj,rij,rad,xx)
+           subroutine cartesian_coords_conv(ri,rj,rij,rad,xx,xxmon,zhe,rhe,thhe)
            real(rk),intent(in)::ri(3),rj(3),rij(3),rad
-           real(rk)::xx(3,2*nmon)
-           real(rk)::phrot,throt,fac1,fac2
+           real(rk)::xx(3,2*nmon+nhe),xxmon(3,nmon),zhe(nhe),xcm1(3),xcm2(3)
+           real(rk)::phrot,throt,fac1,fac2,rhe(nmon,nhe),thhe(nmon,nhe)
+           real(rk)::xme1(3),xme2(3)
+           integer(ik)::i,j
 
            fac1=-(att(1)%ma*requil/mtot)
            fac2=fac1+requil
 
+           if (nmon.eq.2) then
      !Rotation to the system
              phrot=datan2(-rij(2),rij(1))
              throt=dacos(rij(3)/norm(rij))
@@ -379,8 +382,33 @@ end subroutine angs
        xx(:,2)=fac1*ri-rij/2.0_rk
        xx(:,3)=fac2*rj+rij/2.0_rk
        xx(:,4)=fac1*rj+rij/2.0_rk
+       xcm1=xxmon(:,1)
+       xcm2=xxmon(:,2)
+       xme1=(xx(:,1)+xx(:,2))/2
+       xme2=(xx(:,3)+xx(:,4))/2
+
+       do i=1,nhe
+        xx(:,4+i)=zhe(i)-xcm1-xme1      
+        rhe(1,i)=norm(xx(:,4+i)-xme1)
+        thhe(1,i)=dacos(dot_product(ri,xx(:,4+i))/rhe(1,i))
+        rhe(2,i)=norm(xx(:,4+i)-xme2)
+        thhe(2,i)=dacos(dot_product(rj,xx(:,4+i))/rhe(1,i))
+       enddo        
 
 
+       else
+       xx(:,1)=fac2*ri
+       xx(:,2)=fac1*ri
+       xcm1=xxmon(:,1)
+
+       do i=1,nhe
+        xx(:,2+i)=zhe(i)-xcm1       
+        rhe(1,i)=norm(xx(:,2+i))
+        thhe(1,i)=dacos(dot_product(ri,xx(:,2+i))/rhe(1,i))
+       enddo        
+               
+       endif
+               
 
        return
        end subroutine cartesian_coords_conv
