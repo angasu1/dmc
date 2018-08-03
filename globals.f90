@@ -33,7 +33,8 @@ Module global_variables
   logical::is=.false.,qgau=.false.
   logical::potfit=.false.
   logical::jac=.false.
-  real(rk)::requil=0.0_rk
+  logical::hhon=.true.,hmon=.true.,mmon=.true.
+  real(rk)::requil=0.0_rk,frotmol=1.0_rk,frothe=1.0_rk
   real(rk)::rfb,rfbmax,rfbmin,drfb,dtau,rmax,rmin,umb_ang,xn(3),initd=0.0_rk
   real(rk)::diffcHe,diffchered,diffccm,A,B,C,dhe,mHe,dmassred,mtot
   real(rk)::factorrotx=1.0_rk,factorroty=1.0_rk,factorrotz=1.0_rk

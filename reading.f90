@@ -175,6 +175,16 @@ Contains
              call value(args(2),dtau,ierror)    
           elseif (trim(args(1)).eq."nruns") then
              call value(args(2),nruns,ierror)    
+          elseif (trim(args(1)).eq."hhoff") then
+               hhon=.false.
+          elseif (trim(args(1)).eq."hmoff") then
+               hmon=.false.
+          elseif (trim(args(1)).eq."mmoff") then
+               mmon=.false.
+          elseif (trim(args(1)).eq."frotmol") then
+             call value(args(2),frotmol,ierror)    
+          elseif (trim(args(1)).eq."fdc") then
+             call value(args(2),frothe,ierror)    
           else
              write(*,*) 'suboption ',trim(args(2)),' of DMC no recognized!!'       
              stop

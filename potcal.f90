@@ -350,12 +350,15 @@ end subroutine angs
 
            subroutine cartesian_coords_conv(ri,rj,rij,rad,xx,xxmon,zhe,rhe,thhe)
            real(rk),intent(in)::ri(3),rj(3),rij(3),rad
-           real(rk)::xx(3,2*nmon+nhe),xxmon(3,nmon),zhe(nhe),xcm1(3),xcm2(3)
+           real(rk)::xx(3,2*nmon+nhe),xxmon(3,nmon),zhe(3,nhe),xcm1(3),xcm2(3)
            real(rk)::phrot,throt,fac1,fac2,rhe(nmon,nhe),thhe(nmon,nhe)
            real(rk)::xme1(3),xme2(3)
            integer(ik)::i,j
 
-           fac1=-(att(1)%ma*requil/mtot)
+          !write(*,*) 'cartesian'
+           
+
+           fac1=-(att(1)%ma*requil*ar2bo/mtot)
            fac2=fac1+requil
 
            if (nmon.eq.2) then
@@ -388,7 +391,7 @@ end subroutine angs
        xme2=(xx(:,3)+xx(:,4))/2
 
        do i=1,nhe
-        xx(:,4+i)=zhe(i)-xcm1-xme1      
+        xx(:,4+i)=zhe(:,i)-xcm1-xme1      
         rhe(1,i)=norm(xx(:,4+i)-xme1)
         thhe(1,i)=dacos(dot_product(ri,xx(:,4+i))/rhe(1,i))
         rhe(2,i)=norm(xx(:,4+i)-xme2)
@@ -402,7 +405,10 @@ end subroutine angs
        xcm1=xxmon(:,1)
 
        do i=1,nhe
-        xx(:,2+i)=zhe(i)-xcm1       
+        xx(:,2+i)=zhe(:,i)-xcm1       
+       !write(*,*) 'xhe',xx(:,2+i)
+       !write(*,*) 'xhe',zhe(:,i)
+       !write(*,*) 'xhe',xcm1
         rhe(1,i)=norm(xx(:,2+i))
         thhe(1,i)=dacos(dot_product(ri,xx(:,2+i))/rhe(1,i))
        enddo        

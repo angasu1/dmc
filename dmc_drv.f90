@@ -49,46 +49,35 @@ Subroutine dmc_drv
        call rotcons_calculation
        call potparam
        if (nmon.gt.1) call potdimparam
-       A=10.406132287017446_rk*cm2har
-       B=10.406132287017446_rk*cm2har
-       diffccm=1.6732322591380111_rk*cm2har!OJO poniendo las mismas que David
+       A=A*frotmol
+       B=B*frotmol
+       C=C*frotmol
+       diffccm=diffccm*frothe
+        
+
+
+       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+       !A=10.406132287017446_rk*cm2har
+       !B=10.406132287017446_rk*cm2har
+       !diffccm=1.6732322591380111_rk*cm2har!OJO poniendo las mismas que David
+       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        call output_writing(1)
 
-
-       !!!!!!!!!!!!!!!DEBBUGING
-           !rr=3.746d0
-           !req=rr*ar2bo
-           !th1d=9.0d0
-           !th2d=89.9d0
-           !taud=180.0d0
-           !call pothcl2(rr,dcos(radian(th1d)),dcos(radian(th2d)),radian(taud),energy)
-           !write(*,*) 'energy',energy
-           !emin=-3.5887259757010264d0
-           !rr=3.650d0
-           !th1d=47.0d0
-           !th2d=133.0d0
-           !taud=180.0d0
-           !call pothcl2(rr,dcos(radian(th1d)),dcos(radian(th2d)),radian(taud),energy)
-           !call hf2pot(1.7445_rk,1.7404_rk,5.144_rk,9.00_rk,64.14_rk,180.00_rk,energy)
-           !write(*,*) 'energy',energy
-           !write(6,*) 'barrier',th1d,th2d,energy-emin
-           !stop
-           !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
  main_loop:  do icorrida=1,nruns
      
 
    !initialization of values
          icontr=0               
-         ermedia=0d0
+         ermedia=0
          ermedia2=0d0 
          erme_wn(icorrida)=0d0
-         npaso=1 
          er(0)=0d0 
          N=nw  
-         fonda=0.0_rk
+
        
         call initial_conditions(icorrida) 
+       !if (icorrida.eq.1) call dist_writing(N)
 
        !Ciclo sobre todos los pasos temporales 
 
@@ -109,7 +98,7 @@ steps:  do npaso=1,nstps
         if (icorrida.eq.1) then    
            if (npaso.ge.min(20000,nstps/2)) then
              if (mod(npaso,100).eq.0) then
-              call dist_writing(N)
+             !call dist_writing(N)
              endif
            endif
         endif
@@ -154,7 +143,7 @@ End Subroutine dmc_drv
   
        do j=1,nw 
 
-      rot=0.0d0 !poner a cero si se quiere iniciar alineado con el lab
+      rot=1.0d0 !poner a cero si se quiere iniciar alineado con el lab
         do jmon=1,nmon
          y1(:,j,jmon)=ei
          y2(:,j,jmon)=ej
@@ -197,7 +186,6 @@ End Subroutine dmc_drv
             zcor(2,j,jhe) = rr*dsqrt(1-u**2)*dsin(phiinicial) 
             zcor(3,j,jhe) = rr*u  
       
-          !rhe(:,j,jhe)=(zcor(:,j,jhe)-xcor(:,j)) !OJO
        
           !call rotaciones(rhe(:,j,jhe),rrot,phi,theta,psi)
            
@@ -313,24 +301,26 @@ End Subroutine dmc_drv
        
         
 
-        do j=1,N
-      !if (.false.) then !OJO
-        !Euler angles calculation
-      ! call euler(y1(:,j),y2(:,j),y3(:,j),phi,theta,psi)
+     do j=1,N
 
           !Potential Molecule(s)-heliums
         sumpot=0.0_rk
+
+        if (hmon) then
           do jhe=1,nhe
              do jmon=1,nmon
-             call potcalc(y1(:,j,jmon),y2(:,j,jmon),y3(:,j,jmon),xcor(:,j,jmon),zcor(:,j,jhe),cth,v_molhe)
+             call potcalc(y1(:,j,jmon),y2(:,j,jmon),y3(:,j,jmon),&
+                     &xcor(:,j,jmon),zcor(:,j,jhe),cth,v_molhe)
              sumpot=sumpot+v_molhe/har2cm
              enddo
           enddo
+        endif
 
           pot(j)=sumpot
 
           !Dimer Potential(in case there are more than one molecule)
           sumpot=0.0_rk
+           if (mmon) then
              do jmon=1,nmon-1
                      do kmon=jmon+1,nmon
                              call potdimer(j,y3(:,j,jmon),y3(:,j,kmon)&
@@ -338,14 +328,16 @@ End Subroutine dmc_drv
                              sumpot=sumpot+potdim/har2cm
                       enddo
               enddo
+          endif
 
-      pot(j)=pot(j)+sumpot
+            pot(j)=pot(j)+sumpot
 
        !A este potencial hay que sumarle todas las interacciones he-he
 
        sumpot=0.0_rk
-       do jhe=1,nhe-1
-        do khe=jhe+1,nhe
+          if (hhon) then
+            do jhe=1,nhe-1
+              do khe=jhe+1,nhe
 
           rhehe=dsqrt(dot_product(zcor(:,j,jhe)-zcor(:,j,khe),zcor(:,j,jhe)-zcor(:,j,khe)))
 
@@ -353,15 +345,15 @@ End Subroutine dmc_drv
         
           sumpot=sumpot+vvhehe
 
-        enddo
-       enddo
+              enddo
+            enddo
+          endif
 
       pot(j)=pot(j)+sumpot
 
-     !endif
-     !pot(j)=0.0_rk !OJO
 
       signo(j)=1.0_rk
+
       if (state.ne.0) then
         if (nmon.eq.1) ctha=y3(3,j,1)
         call wvfunct(ctha,cthb,phi,j,mod(npaso,2))
@@ -370,7 +362,7 @@ End Subroutine dmc_drv
 
 
      
-       Enddo 
+     Enddo 
       
         return 
         End Subroutine potential_calculation 
@@ -389,10 +381,10 @@ End Subroutine dmc_drv
 
       do j=1,N    
           
-                !For the moment this is only implemented for a maximum of
+                !Warning:For the moment this is only implemented for a maximum of
                 !two monomers
 
-                  ri=y3(:,j,1)          
+                   ri=y3(:,j,1)          
                    if (nmon.eq.2) then
                    rj=y3(:,j,2)          
                    rij=(xcor(:,j,kmon)-xcor(:,j,jmon))*bo2ar
@@ -410,6 +402,23 @@ End Subroutine dmc_drv
 
                 
           avgxx=avgxx+xx
+          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!debug
+             write(250,1000) ri
+             write(250,1000) rj
+             write(250,1000) rij
+             write(250,1000) rad
+             write(250,1000) xxmon
+             write(250,1000) zhe
+             write(250,1000) rhe
+             write(250,1000) thhe
+            !call write_xyz(500,2*nmon+nhe,att%nom,xx*bo2ar) 
+1000 format(*(F10.4,'&'))        
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+
+
+
 
       enddo
             avgxx=avgxx/dfloat(N)
@@ -418,7 +427,6 @@ End Subroutine dmc_drv
           
            
 
-1000 format(7(F10.4))        
 
 
 
