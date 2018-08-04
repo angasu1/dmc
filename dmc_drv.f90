@@ -47,20 +47,25 @@ Subroutine dmc_drv
        idum=-1234
        if (.not.fixran) call seed_cal(idum)
        call rotcons_calculation
+     ! write(*,*) A*har2cm,B*har2cm,diffccm*har2cm
        call potparam
        if (nmon.gt.1) call potdimparam
        A=A*frotmol
        B=B*frotmol
        C=C*frotmol
        diffccm=diffccm*frothe
+
+    !  write(*,*) A*har2cm,B*har2cm,diffccm*har2cm
         
 
 
        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-       !A=10.406132287017446_rk*cm2har
-       !B=10.406132287017446_rk*cm2har
-       !diffccm=1.6732322591380111_rk*cm2har!OJO poniendo las mismas que David
+    !   A=10.406132287017446_rk*cm2har
+    !   B=10.406132287017446_rk*cm2har
+    !   diffccm=1.6732322591380111_rk*cm2har!OJO poniendo las mismas que David
        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !  write(*,*) A*har2cm,B*har2cm,diffccm*har2cm
+    !  stop
        call output_writing(1)
 
 

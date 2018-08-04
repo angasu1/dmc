@@ -30,6 +30,7 @@ Module global_variables
   real(rk),parameter:: ek(3)=(/0.0_rk,0.0_rk,1.0_rk/)
   logical::fixran=.false.
   integer(ik)::simtyp,moltyp,n_at
+  integer(ik)::n_atxmol
   logical::is=.false.,qgau=.false.
   logical::potfit=.false.
   logical::jac=.false.

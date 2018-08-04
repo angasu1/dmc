@@ -50,10 +50,15 @@ Contains
 
 
       mtot=0.0_rk
-      do j=1,n_at+nhe
+      do j=1,n_at
        call props_assignment(att(j)%nom,j)
        if (j.le.n_at) mtot=mtot+att(j)%ma
       enddo
+      mtot=mtot/nmon
+      do j=1,nhe
+       call props_assignment(att(n_at+j)%nom,j)
+      enddo
+
 
       Call results_file_opening
 
@@ -112,7 +117,7 @@ Contains
         elseif (trim(args(1)).eq.'mn') then
                 molname=trim(args(2))
                 call check_name
-                allocate(coor(3,n_at))
+                allocate(coor(3,n_atxmol))
                          
         else
                 write(*,*) 'argument ',args(1),' not understood'
@@ -162,7 +167,7 @@ Contains
              call value(args(2),nhe,ierror)    
           elseif (trim(args(1)).eq."nmon") then
              call value(args(2),nmon,ierror)    
-                  n_at=nmon*n_at  
+                  n_at=nmon*n_atxmol  
           elseif (trim(args(1)).eq."is") then
                   is=.true.
           elseif (trim(args(1)).eq."state") then
@@ -258,11 +263,11 @@ Contains
 
            Select case (molname)
            case('hcl')
-            n_at=2
+            n_atxmol=2
            case('hbr')
-            n_at=2
+            n_atxmol=2
            case('hf')
-            n_at=2
+            n_atxmol=2
            case default
             write(*,*) 'molname ',trim(molname),' not recognized'
             stop
@@ -274,9 +279,8 @@ Contains
    subroutine reading_coords
            integer(ik)::i,j,nn
            
-          !write(*,*) 'n_at',nn,int(dfloat(n_at)/dfloat(nmon))
            read(30,*) nn
-           if (nn.ne.int(dfloat(n_at)/dfloat(nmon))) stop 'n_at wrong in in_conf.xyz'
+           if (nn.ne.n_atxmol) stop 'n_at wrong in in_conf.xyz'
            read(30,*)
 
            do i=1,nn

@@ -37,11 +37,11 @@ contains
 
   subroutine cal_cm(xcmass,xx) 
     real(rk),intent(out)::xcmass(3)
-    real(rk),intent(in)::xx(3,n_at)
+    real(rk),intent(in)::xx(3,n_atxmol)
     integer(ik)::i
 
     xcmass=0._rk
-    do i=1,n_at
+    do i=1,n_atxmol
        xcmass(1)=xcmass(1)+xx(1,i)*att(i)%ma        
        xcmass(2)=xcmass(2)+xx(2,i)*att(i)%ma        
        xcmass(3)=xcmass(3)+xx(3,i)*att(i)%ma        
@@ -87,7 +87,7 @@ End Subroutine rotcons_calculation
 
 subroutine rot_constants
 real(rk)::rotcons(3)
-real(rk)::inm(3),xcm(3),xx(3,n_at)
+real(rk)::inm(3),xcm(3),xx(3,n_atxmol)
 integer(ik)::i
   xx=coor*ar2bo
   call cal_cm(xcm,xx)
@@ -105,7 +105,7 @@ end subroutine rot_constants
 
 subroutine in_moment(inm,xx)
 real(rk),intent(out)::inm(3)
-real(rk),intent(in)::xx(n_at,3)
+real(rk),intent(in)::xx(n_atxmol,3)
 real(rk)::inten(3,3),v(3,3)
 integer(ik)::j,i
  call in_tensor(inten,xx)
@@ -129,10 +129,10 @@ end subroutine in_moment
 
 subroutine in_tensor(inten,xx)
 real(rk),intent(out)::inten(3,3)
-real(rk),intent(in)::xx(3,n_at)
+real(rk),intent(in)::xx(3,n_atxmol)
 integer(ik)::i,j
 inten=0._rk
-do i=1,n_at
+do i=1,n_atxmol
  inten(1,1)=inten(1,1)+att(i)%ma*(xx(2,i)**2+xx(3,i)**2)       
  inten(2,2)=inten(2,2)+att(i)%ma*(xx(1,i)**2+xx(3,i)**2)       
  inten(3,3)=inten(3,3)+att(i)%ma*(xx(1,i)**2+xx(2,i)**2)       
