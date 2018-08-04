@@ -56,7 +56,7 @@ Contains
       enddo
       mtot=mtot/nmon
       do j=1,nhe
-       call props_assignment(att(n_at+j)%nom,j)
+       call props_assignment(att(n_at+j)%nom,n_at+j)
       enddo
 
 
@@ -168,8 +168,6 @@ Contains
           elseif (trim(args(1)).eq."nmon") then
              call value(args(2),nmon,ierror)    
                   n_at=nmon*n_atxmol  
-          elseif (trim(args(1)).eq."is") then
-                  is=.true.
           elseif (trim(args(1)).eq."state") then
              call value(args(2),state,ierror)    
           elseif (trim(args(1)).eq."node") then
@@ -180,11 +178,13 @@ Contains
              call value(args(2),dtau,ierror)    
           elseif (trim(args(1)).eq."nruns") then
              call value(args(2),nruns,ierror)    
-          elseif (trim(args(1)).eq."hhoff") then
+          elseif (trim(args(1)).eq."is") then
+                  is=.true.
+          elseif (trim(args(1)).eq."hh") then
                hhon=.false.
-          elseif (trim(args(1)).eq."hmoff") then
+          elseif (trim(args(1)).eq."mh") then
                hmon=.false.
-          elseif (trim(args(1)).eq."mmoff") then
+          elseif (trim(args(1)).eq."mm") then
                mmon=.false.
           elseif (trim(args(1)).eq."frotmol") then
              call value(args(2),frotmol,ierror)    

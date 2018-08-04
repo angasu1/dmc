@@ -55,17 +55,20 @@ Subroutine dmc_drv
        C=C*frotmol
        diffccm=diffccm*frothe
 
-    !  write(*,*) A*har2cm,B*har2cm,diffccm*har2cm
         
 
 
-       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !  HCL DAVID
     !   A=10.406132287017446_rk*cm2har
     !   B=10.406132287017446_rk*cm2har
     !   diffccm=1.6732322591380111_rk*cm2har!OJO poniendo las mismas que David
-       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    !  write(*,*) A*har2cm,B*har2cm,diffccm*har2cm
-    !  stop
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !HF DAVID  
+    !A = 20.939_rk*cm2har
+    !B = 20.939_rk*cm2har
+    !diffccm =1.0_rk/(2.0_rk*36469.6_rk)
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        call output_writing(1)
 
 
@@ -303,7 +306,6 @@ End Subroutine dmc_drv
         integer(ik),intent(in)::N 
         real(rk)::xcmass(3),cth,ctha,cthb,phi
 
-       
         
 
      do j=1,N
@@ -321,7 +323,7 @@ End Subroutine dmc_drv
           enddo
         endif
 
-          pot(j)=sumpot
+        pot(j)=sumpot
 
           !Dimer Potential(in case there are more than one molecule)
           sumpot=0.0_rk
@@ -335,7 +337,7 @@ End Subroutine dmc_drv
               enddo
           endif
 
-            pot(j)=pot(j)+sumpot
+        pot(j)=pot(j)+sumpot
 
        !A este potencial hay que sumarle todas las interacciones he-he
 
@@ -355,6 +357,7 @@ End Subroutine dmc_drv
           endif
 
       pot(j)=pot(j)+sumpot
+
 
 
       signo(j)=1.0_rk
