@@ -476,11 +476,8 @@ end subroutine angs
             xx(:,1)=(xxmon(:,1)+fac1*ri)*bo2ar
             xx(:,2)=(xxmon(:,1)+fac2*ri)*bo2ar
             xx(:,3)=(xxmon(:,2)+fac1*rj)*bo2ar
-            write(*,*) 'cojones',xx(:,3) 
-            write(*,*) 'cojones',(xxmon(:,2)+fac1*rj)*bo2ar
-            write(*,*) 'cojones',(xxmon(:,2))*bo2ar
-            write(*,*) 'cojones',(fac1*rj)*bo2ar
-            stop
+            write(*,*) '???',xx(:,3) 
+            write(*,*) '???',(xxmon(:,2)+fac1*rj)*bo2ar
             xx(:,4)=(xxmon(:,2)+fac2*rj)*bo2ar
             xx(:,5)=zhe(:,1)*bo2ar
             call write_xyz(238,5,atip,xx)
