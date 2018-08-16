@@ -307,12 +307,11 @@
 
              subroutine write_xyz(nfile,nat,atyp,xx)
           integer(ik)::i,j,nfile,nat      
-          real(rk)::xx(3,2*nat)
+          real(rk)::xx(3,nat)
           character(len=2)::atyp(nat)
- 
+
           write(nfile,*) nat
           write(nfile,*) 
- 
 
          do i=1,nat
              write(nfile,1000) atyp(i),(xx(j,i),j=1,3)

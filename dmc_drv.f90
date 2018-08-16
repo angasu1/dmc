@@ -43,17 +43,20 @@ Subroutine dmc_drv
    allocate(signo(nw+delta_N_max),fonda(nw+delta_N_max,0:1))
    allocate(alphahe(nhe),betahe(nhe),erme_wn(nruns))
 
+          open(unit=238,file='conf.xyz')!OJO
+          open(unit=239,file='comp.dat')!OJO
 
        idum=-1234
        if (.not.fixran) call seed_cal(idum)
        call rotcons_calculation
-     ! write(*,*) A*har2cm,B*har2cm,diffccm*har2cm
        call potparam
        if (nmon.gt.1) call potdimparam
        A=A*frotmol
        B=B*frotmol
        C=C*frotmol
        diffccm=diffccm*frothe
+
+       write(*,*) A*har2cm,B*har2cm,diffccm*har2cm
 
         
 
@@ -106,9 +109,9 @@ steps:  do npaso=1,nstps
         if (icorrida.eq.1) then    
            if (npaso.ge.min(20000,nstps/2)) then
              if (mod(npaso,100).eq.0) then
-             !call dist_writing(N)
+              call dist_writing(N)
              endif
-           endif
+           endif 
         endif
 !       !Se llama a la subrutina que efectúa los procesos de vida o muerte
         call branch(npaso,N,icorrida) 
@@ -142,6 +145,9 @@ End Subroutine dmc_drv
     !Primero. Se asignan las posiciones del centro de masas de la molecula 
         xcor=0.0_rk
         if (moltyp.eq.2) then
+                !If we have a dimer we start with the center
+                !of masses separated by a distance 2*initd
+                !initd is fixed in reading.f90
             xcor(1,:,1)=xcor(1,:,1)-initd
             xcor(1,:,2)=xcor(1,:,2)+initd
         endif
@@ -157,11 +163,13 @@ End Subroutine dmc_drv
          y2(:,j,jmon)=ej
          y3(:,j,jmon)=ek
          phiinicial = ran2(idum)*2.d0*pi*rot
+        !phiinicial=0.0_rk!OJO
        !Se rota la molecula con respecto al ejex molecular un angulo phiinicial 
       call rotacion(y1(1,j,jmon),Y1(2,j,jmon),Y1(3,j,jmon),y3(1,j,jmon),y3(2,j,jmon),y3(3,j,jmon),phiinicial) 
       call rotacion(y1(1,j,jmon),Y1(2,j,jmon),Y1(3,j,jmon),y2(1,j,jmon),y2(2,j,jmon),y2(3,j,jmon),phiinicial) 
         
         phiinicial = ran2(idum)*2.d0*pi*rot
+        !phiinicial=0.0_rk!OJO
        !se rota la molecula con respecto al ejey molecular un angulo phiinicial 
       call rotacion(y2(1,j,jmon),Y2(2,j,jmon),Y2(3,j,jmon),y3(1,j,jmon),y3(2,j,jmon),y3(3,j,jmon),phiinicial) 
       call rotacion(y2(1,j,jmon),Y2(2,j,jmon),Y2(3,j,jmon),y1(1,j,jmon),y1(2,j,jmon),y1(3,j,jmon),phiinicial) 
@@ -395,7 +403,7 @@ End Subroutine dmc_drv
                    ri=y3(:,j,1)          
                    if (nmon.eq.2) then
                    rj=y3(:,j,2)          
-                   rij=(xcor(:,j,kmon)-xcor(:,j,jmon))*bo2ar
+                   rij=(xcor(:,j,2)-xcor(:,j,1))
                    rad=norm(rij)
                    endif
                    do k=1,nmon
@@ -430,7 +438,7 @@ End Subroutine dmc_drv
 
       enddo
             avgxx=avgxx/dfloat(N)
-            call write_xyz(500,2*nmon+nhe,att%nom,avgxx)
+           !call write_xyz(500,2*nmon+nhe,att%nom,avgxx)
 
           
            
@@ -917,7 +925,7 @@ End Subroutine dmc_drv
            do i=1,nhe
            write(600,3000) diffcHe*har2cm
            enddo
-           write(600,4000) A*har2cm,B*har2cm,C*har2cm
+           write(600,4000) A*har2cm!,B*har2cm!,C*har2cm
            case default
             write(*,*) 'molname ',trim(molname),' not recognized'
             stop
@@ -926,7 +934,8 @@ End Subroutine dmc_drv
 1000   format(' Molecule name:',2x,A)
 2000   format(' Molecule diffusion constant(cm-1):',2x,F18.10)
 3000   format(' He diffusion constant(cm-1):',2x,F18.10)
-4000   format(' Rotational  constants(cm-1):',3(2x,F18.10))
+4000   format(' Rotational constants(cm-1):',2x,F18.10)
+5000   format(' Rotational. Constant(cm-1):',2x,F18.10)
 
 
            end subroutine output_writing        

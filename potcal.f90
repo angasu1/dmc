@@ -352,63 +352,180 @@ end subroutine angs
            real(rk),intent(in)::ri(3),rj(3),rij(3),rad
            real(rk)::xx(3,2*nmon+nhe),xxmon(3,nmon),zhe(3,nhe),xcm1(3),xcm2(3)
            real(rk)::phrot,throt,fac1,fac2,rhe(nmon,nhe),thhe(nmon,nhe)
-           real(rk)::xme1(3),xme2(3)
+           real(rk)::transl1(3),transl2(3)
            integer(ik)::i,j
+           character(len=2)::atip(5)
+           real(rk)::th1com(3),th2com(3),taucom(3),Rcom(3),rhecom(3,2),alhecom(3,2)
+           real(rk)::rijcom(3),ricom(3),rjcom(3),xmoncom(3,2),zhecom(3)
 
           !write(*,*) 'cartesian'
            
 
-           fac1=-(att(1)%ma*requil*ar2bo/mtot)
-           fac2=fac1+requil
+           fac2=-(att(1)%ma*requil*ar2bo/mtot)
+           fac1=fac2+requil*ar2bo
+
 
            if (nmon.eq.2) then
-     !Rotation to the system
-             phrot=datan2(-rij(2),rij(1))
-             throt=dacos(rij(3)/norm(rij))
-             throt=pi/2.0_rk-throt
+            !!!!!!!!!!!!!!!!!DEBUGGING
+            atip=(/'H ','Cl','H ','Cl','He'/)
+            xx(:,1)=(xxmon(:,1)+fac1*ri)*bo2ar
+            xx(:,2)=(xxmon(:,1)+fac2*ri)*bo2ar
+            xx(:,3)=(xxmon(:,2)+fac1*rj)*bo2ar
+            xx(:,4)=(xxmon(:,2)+fac2*rj)*bo2ar
+            xx(:,5)=zhe(:,1)*bo2ar
+            call write_xyz(238,5,atip,xx)
+
+
+            !Calculos comprobacion 1
+            ricom=ri
+            rjcom=rj
+            xmoncom(:,1)=xx(:,1)*ar2bo-fac1*ricom
+            xmoncom(:,2)=xx(:,3)*ar2bo-fac1*rjcom
+            rijcom=xmoncom(:,2)-xmoncom(:,1)
+            rcom(1)=norm(rijcom)
+            zhecom=zhe(:,1)
+            th1com(1)=dacos(dot_product(ricom,rijcom)/rcom(1))*180.0_rk/pi
+            th2com(1)=dacos(dot_product(rjcom,rijcom)/rcom(1))*180.0_rk/pi
+            rhecom(1,1)=norm(zhecom-xmoncom(:,1))
+            rhecom(1,2)=norm(zhecom-xmoncom(:,2))
+            alhecom(1,1)=dacos(dot_product(zhecom-xmoncom(:,1),ricom)/rhecom(1,1))*180_rk/pi
+            alhecom(1,2)=dacos(dot_product(zhecom-xmoncom(:,2),rjcom)/rhecom(1,2))*180_rk/pi
+            write(239,1000) rcom(1),th1com(1),th2com(1),rhecom(1,1),rhecom(1,2),alhecom(1,1),alhecom(1,2)
+1000     format(*(F18.10,3x))            
+
+
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+
+
+
+
+           !Translation of all the coordinates
+           transl1=xxmon(:,1)
+           xxmon(:,1)=xxmon(:,1)-transl1
+           xxmon(:,2)=xxmon(:,2)-transl1
+           do j=1,nhe
+           zhe(:,j)=zhe(:,j)-transl1
+           enddo
+           !!!!!!!!!!!!!!DEbbuging
+            xx(:,1)=(xxmon(:,1)+fac1*ri)*bo2ar
+            xx(:,2)=(xxmon(:,1)+fac2*ri)*bo2ar
+            xx(:,3)=(xxmon(:,2)+fac1*rj)*bo2ar
+            xx(:,4)=(xxmon(:,2)+fac2*rj)*bo2ar
+            xx(:,5)=zhe(:,1)*bo2ar
+            call write_xyz(238,5,atip,xx)
+
+            !Calculos comprobacion 2
+            ricom=ri
+            rjcom=rj
+            xmoncom(:,1)=xx(:,1)*ar2bo-fac1*ricom
+            xmoncom(:,2)=xx(:,3)*ar2bo-fac1*rjcom
+            rijcom=xmoncom(:,2)-xmoncom(:,1)
+            rcom(2)=norm(rijcom)
+            zhecom=zhe(:,1)
+            th1com(2)=dacos(dot_product(ricom,rijcom)/rcom(2))*180.0_rk/pi
+            th2com(2)=dacos(dot_product(rjcom,rijcom)/rcom(2))*180.0_rk/pi
+            rhecom(2,1)=norm(zhecom-xmoncom(:,1))
+            rhecom(2,2)=norm(zhecom-xmoncom(:,2))
+            alhecom(2,1)=dacos(dot_product(zhecom-xmoncom(:,1),ricom)/rhecom(2,1))*180_rk/pi
+            alhecom(2,2)=dacos(dot_product(zhecom-xmoncom(:,2),rjcom)/rhecom(2,2))*180_rk/pi
+            write(239,1000) rcom(2),th1com(2),th2com(2),rhecom(2,1),rhecom(2,2),alhecom(2,1),alhecom(2,2)
+
+
+
+           !Rotation to the system
+            phrot=datan2(-rij(2),rij(1))
+            throt=dacos(rij(3)/norm(rij))
+            throt=pi/2.0_rk-throt
 
             !write(*,*) 'rij ant',rij
+            !write(*,*) 'rij ant',xxmon(:,1)
+            !write(*,*) 'rij ant',xxmon(:,2)
              call rotz(rij,-phrot)
              call rotz(ri,-phrot)
              call rotz(rj,-phrot)
-            !write(*,*) 'rij desp',rij
+             call rotz(xxmon(:,1),-phrot)
+             call rotz(xxmon(:,2),-phrot)
+             do j=1,nhe
+             call rotz(zhe(:,j),-phrot)
+             enddo
+            !write(*,*) 'rij ant2',rij
+            !write(*,*) 'rij ant2',xxmon(:,1)
+            !write(*,*) 'rij ant2',xxmon(:,2)
              call roty(rij,throt)
              call roty(ri,throt)
              call roty(rj,throt)
-            !write(*,*) 'rij desp2',rij
+             call roty(xxmon(:,1),throt)
+             call roty(xxmon(:,2),throt)
+             do j=1,nhe
+             call roty(zhe(:,j),throt)
+             enddo
+            !write(*,*) 'rij ant3',rij
+            !write(*,*) 'rij ant3',xxmon(:,1)
+            !write(*,*) 'rij ant3',xxmon(:,2)
             !stop
 
+           !do j=1,3
+           !xx(j,1)=(xxmon(j,1)+fac1*ri(j))*bo2ar
+           !xx(j,2)=(xxmon(j,1)+fac2*ri(j))*bo2ar
+           !xx(j,3)=(xxmon(j,2)+fac1*rj(j))*bo2ar
+           !xx(j,4)=(xxmon(j,2)+fac2*rj(j))*bo2ar
+           !xx(j,5)=zhe(j,1)*bo2ar
+           !enddo
+            xx(:,1)=(xxmon(:,1)+fac1*ri)*bo2ar
+            xx(:,2)=(xxmon(:,1)+fac2*ri)*bo2ar
+            xx(:,3)=(xxmon(:,2)+fac1*rj)*bo2ar
+            write(*,*) 'cojones',xx(:,3) 
+            write(*,*) 'cojones',(xxmon(:,2)+fac1*rj)*bo2ar
+            write(*,*) 'cojones',(xxmon(:,2))*bo2ar
+            write(*,*) 'cojones',(fac1*rj)*bo2ar
+            stop
+            xx(:,4)=(xxmon(:,2)+fac2*rj)*bo2ar
+            xx(:,5)=zhe(:,1)*bo2ar
+            call write_xyz(238,5,atip,xx)
 
 
-     !Calculation of cartesian coords
-       xx(:,1)=fac2*ri-rij/2.0_rk
-       xx(:,2)=fac1*ri-rij/2.0_rk
-       xx(:,3)=fac2*rj+rij/2.0_rk
-       xx(:,4)=fac1*rj+rij/2.0_rk
-       xcm1=xxmon(:,1)
-       xcm2=xxmon(:,2)
-       xme1=(xx(:,1)+xx(:,2))/2
-       xme2=(xx(:,3)+xx(:,4))/2
 
-       do i=1,nhe
-        xx(:,4+i)=zhe(:,i)-xcm1-xme1      
-        rhe(1,i)=norm(xx(:,4+i)-xme1)
-        thhe(1,i)=dacos(dot_product(ri,xx(:,4+i))/rhe(1,i))
-        rhe(2,i)=norm(xx(:,4+i)-xme2)
-        thhe(2,i)=dacos(dot_product(rj,xx(:,4+i))/rhe(1,i))
-       enddo        
+
+            !Calculos de comprobacion 3
+            ricom=ri
+            rjcom=rj
+            xmoncom(:,1)=xx(:,1)*ar2bo-fac1*ricom
+            xmoncom(:,2)=xx(:,3)*ar2bo-fac1*rjcom
+            rijcom=xmoncom(:,2)-xmoncom(:,1)
+           !write(*,*) 'comp1',xmoncom(:,1)
+           !write(*,*) 'comp2',xmoncom(:,2)
+           !write(*,*) 'comp2b',xxmon(:,2)
+           !write(*,*) 'comp2bb',xx(:,3)
+           !write(*,*) 'comp2bbb',(xxmon(:,2)+fac1*rj)*bo2ar
+           !write(*,*) 'comp3',rijcom
+           !write(*,*) 'comp4',rij
+           !stop
+            rcom(3)=norm(rijcom)
+            zhecom=zhe(:,1)
+            th1com(3)=dacos(dot_product(ricom,rijcom)/rcom(3))*180.0_rk/pi
+            th2com(3)=dacos(dot_product(rjcom,rijcom)/rcom(3))*180.0_rk/pi
+            rhecom(3,1)=norm(zhecom-xmoncom(:,1))
+            rhecom(3,2)=norm(zhecom-xmoncom(:,2))
+            alhecom(3,1)=dacos(dot_product(zhecom-xmoncom(:,1),ricom)/rhecom(3,1))*180_rk/pi
+            alhecom(3,2)=dacos(dot_product(zhecom-xmoncom(:,2),rjcom)/rhecom(3,2))*180_rk/pi
+            write(239,1000) rcom(3),th1com(3),th2com(3),rhecom(3,1),rhecom(3,2),alhecom(3,1),alhecom(3,2)
+            write(239,*)
+
+
+      !xcm1=-rij/2.0_rk
+      !xcm2=rij/2.0_rk
 
 
        else
+
        xx(:,1)=fac2*ri
        xx(:,2)=fac1*ri
        xcm1=xxmon(:,1)
 
        do i=1,nhe
         xx(:,2+i)=zhe(:,i)-xcm1       
-       !write(*,*) 'xhe',xx(:,2+i)
-       !write(*,*) 'xhe',zhe(:,i)
-       !write(*,*) 'xhe',xcm1
         rhe(1,i)=norm(xx(:,2+i))
         thhe(1,i)=dacos(dot_product(ri,xx(:,2+i))/rhe(1,i))
        enddo        
