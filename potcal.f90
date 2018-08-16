@@ -355,8 +355,9 @@ end subroutine angs
            real(rk)::transl1(3),transl2(3)
            integer(ik)::i,j
            character(len=2)::atip(5)
-           real(rk)::th1com(3),th2com(3),taucom(3),Rcom(3),rhecom(3,2),alhecom(3,2)
-           real(rk)::rijcom(3),ricom(3),rjcom(3),xmoncom(3,2),zhecom(3)
+           real(rk)::th1com(3),th2com(3),taucom(3),Rcom(3),rhecom(3,2,nhe),alhecom(3,2,nhe)
+           real(rk)::rijcom(3),ricom(3),rjcom(3),xmoncom(3,2),zhecom(3,nhe)
+           real(rk)::ph1,ph2,ph
 
           !write(*,*) 'cartesian'
            
@@ -368,29 +369,29 @@ end subroutine angs
            if (nmon.eq.2) then
             !!!!!!!!!!!!!!!!!DEBUGGING
             atip=(/'H ','Cl','H ','Cl','He'/)
-            xx(:,1)=(xxmon(:,1)+fac1*ri)*bo2ar
-            xx(:,2)=(xxmon(:,1)+fac2*ri)*bo2ar
-            xx(:,3)=(xxmon(:,2)+fac1*rj)*bo2ar
-            xx(:,4)=(xxmon(:,2)+fac2*rj)*bo2ar
-            xx(:,5)=zhe(:,1)*bo2ar
-            call write_xyz(238,5,atip,xx)
+           !xx(:,1)=(xxmon(:,1)+fac1*ri)*bo2ar
+           !xx(:,2)=(xxmon(:,1)+fac2*ri)*bo2ar
+           !xx(:,3)=(xxmon(:,2)+fac1*rj)*bo2ar
+           !xx(:,4)=(xxmon(:,2)+fac2*rj)*bo2ar
+           !xx(:,5)=zhe(:,1)*bo2ar
+           !call write_xyz(238,5,atip,xx)
 
 
             !Calculos comprobacion 1
-            ricom=ri
-            rjcom=rj
-            xmoncom(:,1)=xx(:,1)*ar2bo-fac1*ricom
-            xmoncom(:,2)=xx(:,3)*ar2bo-fac1*rjcom
-            rijcom=xmoncom(:,2)-xmoncom(:,1)
-            rcom(1)=norm(rijcom)
-            zhecom=zhe(:,1)
-            th1com(1)=dacos(dot_product(ricom,rijcom)/rcom(1))*180.0_rk/pi
-            th2com(1)=dacos(dot_product(rjcom,rijcom)/rcom(1))*180.0_rk/pi
-            rhecom(1,1)=norm(zhecom-xmoncom(:,1))
-            rhecom(1,2)=norm(zhecom-xmoncom(:,2))
-            alhecom(1,1)=dacos(dot_product(zhecom-xmoncom(:,1),ricom)/rhecom(1,1))*180_rk/pi
-            alhecom(1,2)=dacos(dot_product(zhecom-xmoncom(:,2),rjcom)/rhecom(1,2))*180_rk/pi
-            write(239,1000) rcom(1),th1com(1),th2com(1),rhecom(1,1),rhecom(1,2),alhecom(1,1),alhecom(1,2)
+           !ricom=ri
+           !rjcom=rj
+           !xmoncom(:,1)=xx(:,1)*ar2bo-fac1*ricom
+           !xmoncom(:,2)=xx(:,3)*ar2bo-fac1*rjcom
+           !rijcom=xmoncom(:,2)-xmoncom(:,1)
+           !rcom(1)=norm(rijcom)
+           !zhecom=zhe(:,1)
+           !th1com(1)=dacos(dot_product(ricom,rijcom)/rcom(1))*180.0_rk/pi
+           !th2com(1)=dacos(dot_product(rjcom,rijcom)/rcom(1))*180.0_rk/pi
+           !rhecom(1,1)=norm(zhecom-xmoncom(:,1))
+           !rhecom(1,2)=norm(zhecom-xmoncom(:,2))
+           !alhecom(1,1)=dacos(dot_product(zhecom-xmoncom(:,1),ricom)/rhecom(1,1))*180_rk/pi
+           !alhecom(1,2)=dacos(dot_product(zhecom-xmoncom(:,2),rjcom)/rhecom(1,2))*180_rk/pi
+           !write(239,1000) rcom(1),th1com(1),th2com(1),rhecom(1,1),rhecom(1,2),alhecom(1,1),alhecom(1,2)
 1000     format(*(F18.10,3x))            
 
 
@@ -414,7 +415,7 @@ end subroutine angs
             xx(:,3)=(xxmon(:,2)+fac1*rj)*bo2ar
             xx(:,4)=(xxmon(:,2)+fac2*rj)*bo2ar
             xx(:,5)=zhe(:,1)*bo2ar
-            call write_xyz(238,5,atip,xx)
+          ! call write_xyz(238,5,atip,xx)
 
             !Calculos comprobacion 2
             ricom=ri
@@ -423,14 +424,18 @@ end subroutine angs
             xmoncom(:,2)=xx(:,3)*ar2bo-fac1*rjcom
             rijcom=xmoncom(:,2)-xmoncom(:,1)
             rcom(2)=norm(rijcom)
-            zhecom=zhe(:,1)
             th1com(2)=dacos(dot_product(ricom,rijcom)/rcom(2))*180.0_rk/pi
             th2com(2)=dacos(dot_product(rjcom,rijcom)/rcom(2))*180.0_rk/pi
-            rhecom(2,1)=norm(zhecom-xmoncom(:,1))
-            rhecom(2,2)=norm(zhecom-xmoncom(:,2))
-            alhecom(2,1)=dacos(dot_product(zhecom-xmoncom(:,1),ricom)/rhecom(2,1))*180_rk/pi
-            alhecom(2,2)=dacos(dot_product(zhecom-xmoncom(:,2),rjcom)/rhecom(2,2))*180_rk/pi
-            write(239,1000) rcom(2),th1com(2),th2com(2),rhecom(2,1),rhecom(2,2),alhecom(2,1),alhecom(2,2)
+            do j=1,nhe
+            zhecom(:,j)=zhe(:,j)
+            rhecom(2,1,j)=norm(zhecom(:,j)-xmoncom(:,1))
+            rhecom(2,2,j)=norm(zhecom(:,j)-xmoncom(:,2))
+            alhecom(2,1,j)=dacos(dot_product(zhecom(:,j)-xmoncom(:,1),&
+                           &ricom)/rhecom(2,1,j))*180_rk/pi
+            alhecom(2,2,j)=dacos(dot_product(zhecom(:,j)-xmoncom(:,2),&
+                           &rjcom)/rhecom(2,2,j))*180_rk/pi
+            enddo
+          ! write(239,1000) rcom(2),th1com(2),th2com(2),rhecom(2,1),rhecom(2,2),alhecom(2,1),alhecom(2,2)
 
 
 
@@ -473,14 +478,15 @@ end subroutine angs
            !xx(j,4)=(xxmon(j,2)+fac2*rj(j))*bo2ar
            !xx(j,5)=zhe(j,1)*bo2ar
            !enddo
+           ph1=datan2(ri(2),ri(3))
+           ph2=datan2(rj(2),rj(3))
+           ph=abs(ph1-ph2)
             xx(:,1)=(xxmon(:,1)+fac1*ri)*bo2ar
             xx(:,2)=(xxmon(:,1)+fac2*ri)*bo2ar
             xx(:,3)=(xxmon(:,2)+fac1*rj)*bo2ar
-            write(*,*) '???',xx(:,3) 
-            write(*,*) '???',(xxmon(:,2)+fac1*rj)*bo2ar
             xx(:,4)=(xxmon(:,2)+fac2*rj)*bo2ar
             xx(:,5)=zhe(:,1)*bo2ar
-            call write_xyz(238,5,atip,xx)
+          ! call write_xyz(238,5,atip,xx)
 
 
 
@@ -491,24 +497,21 @@ end subroutine angs
             xmoncom(:,1)=xx(:,1)*ar2bo-fac1*ricom
             xmoncom(:,2)=xx(:,3)*ar2bo-fac1*rjcom
             rijcom=xmoncom(:,2)-xmoncom(:,1)
-           !write(*,*) 'comp1',xmoncom(:,1)
-           !write(*,*) 'comp2',xmoncom(:,2)
-           !write(*,*) 'comp2b',xxmon(:,2)
-           !write(*,*) 'comp2bb',xx(:,3)
-           !write(*,*) 'comp2bbb',(xxmon(:,2)+fac1*rj)*bo2ar
-           !write(*,*) 'comp3',rijcom
-           !write(*,*) 'comp4',rij
-           !stop
             rcom(3)=norm(rijcom)
-            zhecom=zhe(:,1)
             th1com(3)=dacos(dot_product(ricom,rijcom)/rcom(3))*180.0_rk/pi
             th2com(3)=dacos(dot_product(rjcom,rijcom)/rcom(3))*180.0_rk/pi
-            rhecom(3,1)=norm(zhecom-xmoncom(:,1))
-            rhecom(3,2)=norm(zhecom-xmoncom(:,2))
-            alhecom(3,1)=dacos(dot_product(zhecom-xmoncom(:,1),ricom)/rhecom(3,1))*180_rk/pi
-            alhecom(3,2)=dacos(dot_product(zhecom-xmoncom(:,2),rjcom)/rhecom(3,2))*180_rk/pi
-            write(239,1000) rcom(3),th1com(3),th2com(3),rhecom(3,1),rhecom(3,2),alhecom(3,1),alhecom(3,2)
-            write(239,*)
+            do j=1,nhe
+            zhecom(:,j)=zhe(:,j)
+            rhecom(3,1,j)=norm(zhecom(:,j)-xmoncom(:,1))
+            rhecom(3,2,j)=norm(zhecom(:,j)-xmoncom(:,2))
+            alhecom(3,1,j)=dacos(dot_product(zhecom(:,j)-xmoncom(:,1),&
+                           &ricom)/rhecom(3,1,j))*180_rk/pi
+            alhecom(3,2,j)=dacos(dot_product(zhecom(:,j)-xmoncom(:,2),&
+                           &rjcom)/rhecom(3,2,j))*180_rk/pi
+            enddo
+
+            write(250,1000) rcom(3),th1com(3),th2com(3),ph,&
+                  &(rhecom(3,1,j),rhecom(3,2,j),alhecom(3,1,j),alhecom(3,2,j),j=1,nhe)
 
 
       !xcm1=-rij/2.0_rk

@@ -43,8 +43,8 @@ Subroutine dmc_drv
    allocate(signo(nw+delta_N_max),fonda(nw+delta_N_max,0:1))
    allocate(alphahe(nhe),betahe(nhe),erme_wn(nruns))
 
-          open(unit=238,file='conf.xyz')!OJO
-          open(unit=239,file='comp.dat')!OJO
+         !open(unit=238,file='conf.xyz')!OJO
+         !open(unit=239,file='comp.dat')!OJO
 
        idum=-1234
        if (.not.fixran) call seed_cal(idum)
@@ -107,10 +107,10 @@ steps:  do npaso=1,nstps
         call potential_calculation(npaso,N,icontr) 
 
         if (icorrida.eq.1) then    
-           if (npaso.ge.min(20000,nstps/2)) then
-             if (mod(npaso,100).eq.0) then
+           if (npaso.ge.nstps-1000) then
+            !if (mod(npaso,100).eq.0) then
               call dist_writing(N)
-             endif
+            !endif
            endif 
         endif
 !       !Se llama a la subrutina que efectúa los procesos de vida o muerte
@@ -417,16 +417,16 @@ End Subroutine dmc_drv
 
 
                 
-          avgxx=avgxx+xx
+         !avgxx=avgxx+xx
           !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!debug
-             write(250,1000) ri
-             write(250,1000) rj
-             write(250,1000) rij
-             write(250,1000) rad
-             write(250,1000) xxmon
-             write(250,1000) zhe
-             write(250,1000) rhe
-             write(250,1000) thhe
+           ! write(250,1000) ri
+           ! write(250,1000) rj
+           ! write(250,1000) rij
+           ! write(250,1000) rad
+           ! write(250,1000) xxmon
+           ! write(250,1000) zhe
+           ! write(250,1000) rhe
+           ! write(250,1000) thhe
             !call write_xyz(500,2*nmon+nhe,att%nom,xx*bo2ar) 
 1000 format(*(F10.4,'&'))        
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -437,8 +437,8 @@ End Subroutine dmc_drv
 
 
       enddo
-            avgxx=avgxx/dfloat(N)
-           !call write_xyz(500,2*nmon+nhe,att%nom,avgxx)
+           !avgxx=avgxx/dfloat(N)
+            call write_xyz(500,2*nmon+nhe,att%nom,xx)
 
           
            
