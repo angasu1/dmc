@@ -8,7 +8,7 @@ Module dmc_cal
   use pot_calculation 
   implicit none      
  Save
- integer,parameter::delta_N_max=200
+ integer,parameter::delta_N_max=10000
  real(rk),allocatable:: y1(:,:,:),y2(:,:,:),y3(:,:,:)
  real(rk),allocatable:: zcor(:,:,:),xcor(:,:,:)
  real(rk),allocatable::Er(:),pot(:),eloc(:),erme_wn(:)
@@ -496,6 +496,7 @@ End Subroutine dmc_drv
 
           !Si se excede el numero maximo de caminantes permitido, se para 
             If (ikount.gt.nw+delta_N_max) Then 
+            write(*,*) ikount,npaso         
             stop 'Mas caminantes que los permitidos'  
             endif
 
