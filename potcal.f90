@@ -354,7 +354,7 @@ end subroutine angs
            real(rk)::phrot,throt,fac1,fac2,rhe(nmon,nhe),thhe(nmon,nhe)
            real(rk)::transl1(3),transl2(3)
            integer(ik)::i,j
-           character(len=2)::atip(5)
+           character(len=2)::atip(2*nmon+nhe)
            real(rk)::th1com(3),th2com(3),taucom(3),Rcom(3),rhecom(3,2,nhe),alhecom(3,2,nhe)
            real(rk)::rijcom(3),ricom(3),rjcom(3),xmoncom(3,2),zhecom(3,nhe)
            real(rk)::ph1,ph2,ph
@@ -368,7 +368,10 @@ end subroutine angs
 
            if (nmon.eq.2) then
             !!!!!!!!!!!!!!!!!DEBUGGING
-            atip=(/'H ','Cl','H ','Cl','He'/)
+            atip(1:4)=(/'H ','Cl','H ','Cl'/)
+            do j=1,nhe
+                    atip(4+j)='He'
+            enddo
            !xx(:,1)=(xxmon(:,1)+fac1*ri)*bo2ar
            !xx(:,2)=(xxmon(:,1)+fac2*ri)*bo2ar
            !xx(:,3)=(xxmon(:,2)+fac1*rj)*bo2ar
@@ -414,7 +417,9 @@ end subroutine angs
             xx(:,2)=(xxmon(:,1)+fac2*ri)*bo2ar
             xx(:,3)=(xxmon(:,2)+fac1*rj)*bo2ar
             xx(:,4)=(xxmon(:,2)+fac2*rj)*bo2ar
-            xx(:,5)=zhe(:,1)*bo2ar
+            do j=1,nhe
+            xx(:,4+j)=zhe(:,j)*bo2ar
+            enddo
           ! call write_xyz(238,5,atip,xx)
 
             !Calculos comprobacion 2
@@ -485,7 +490,9 @@ end subroutine angs
             xx(:,2)=(xxmon(:,1)+fac2*ri)*bo2ar
             xx(:,3)=(xxmon(:,2)+fac1*rj)*bo2ar
             xx(:,4)=(xxmon(:,2)+fac2*rj)*bo2ar
-            xx(:,5)=zhe(:,1)*bo2ar
+            do j=1,nhe
+            xx(:,4+j)=zhe(:,j)*bo2ar
+            enddo
           ! call write_xyz(238,5,atip,xx)
 
 
