@@ -268,6 +268,8 @@ Contains
             n_atxmol=2
            case('hf')
             n_atxmol=2
+           case('hfcl')
+            n_atxmol=2
            case default
             write(*,*) 'molname ',trim(molname),' not recognized'
             stop

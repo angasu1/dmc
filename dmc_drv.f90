@@ -611,7 +611,7 @@ End Subroutine dmc_drv
         integer::ind,j
          
          if (state.eq.1) then
-         fonda(j,ind)=ctha
+         fonda(j,ind)=dcos(dacos(ctha)+dacos(cthb))
          endif
 
 
@@ -653,8 +653,8 @@ End Subroutine dmc_drv
          
          
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        !Esta subrutina rota un vector en el labframe a un vector en el sistema rotado usando los! 
-        !ángulos de euler.                                                                       !
+        !Esta subrutina rota un vector en el sistema rotado a un vector en el  labframe 
+        !usando los ángulos de euler.   
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         Subroutine  rotaciones(y1,y2,phi,theta,psi)
