@@ -38,7 +38,7 @@
          r=dsqrt(dot_product(rvec,rvec))
          cthet=dot_product(rvec,y3)/r   
          indx=4                         
-         VV= V(r,cthet,indx 
+         VV= V(r,cthet,indx) 
        end select
 
 

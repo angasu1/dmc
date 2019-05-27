@@ -72,32 +72,36 @@ module pothx
 
    end subroutine pars_assignment
 
-      subroutine potential(V,r,x)
-      real(rk),intent(in)::  r, x
+ function V(r,x,indx)              
+      real(rk),intent(in)::  r, x       
+      integer(ik),intent(in)::indx      
       real(rk):: fn(2), Vsh, Vas, bohr_A,cm_H,V
       real(rk)::x2,x3,x4,x5,bb,dd,gg,xf,ra,r2,r6,r7
-      integer(ik)::i
-!     
-      ra=r*bo2arvar
-      x2=x*x;x3=x2*x;x4=x2*x2;x5=x4*x
+      integer(ik)::i                    
+!                                       
+      ra=r                              
+      if (indx.le.3) ra=ra*bo2arvar     
+      x2=x*x;x3=x2*x;x4=x2*x2;x5=x4*x   
       F=(/1._rk ,x ,0.5_rk*(3._rk*(x2)-1_rk) ,0.5_rk*(5._rk*(x3)-3._rk*x) ,&
       &(1._rk/8._rk)*(35._rk*(x4)-30._rk*(x2)+3._rk) ,(1._rk/8._rk)*(63._rk*&
-      &(x5)-70._rk*(x3)+15._rk*x)/)
+      &(x5)-70._rk*(x3)+15._rk*x)/)     
+                                        
+      bb=bfun()                         
+      dd=dfun()                         
+      gg=gfun(ra)                       
+      Vsh=gg*dexp(bb+dd*ra)             
+      xf=dd*ra                          
+      fn=f67(xf)                        
+                                        
+      Vas=0.0_rk                        
+      r2=ra*ra;r6=r2*r2*r2;r7=r6*ra     
+      Vas=fn(1)*(c(1,1)+c(1,2)*F(2))/R6 
+      Vas=vas+fn(2)*(c(2,1)*F(1)+c(2,2)*F(3))/R7
+      V=(Vsh+Vas)!*cm_H                 
+!     hehfpot=(Vsh+Vas)*cm_H            
+      if (indx.eq.4) v=v*219.474625_rk  
+      end function V   
 
-      bb=bfun()
-      dd=dfun()
-      gg=gfun(ra)
-      Vsh=gg*dexp(bb+dd*ra)
-      xf=dd*ra
-      fn=f67(xf)
-
-      Vas=0.0_rk
-      r2=ra*ra;r6=r2*r2*r2;r7=r6*ra
-      Vas=fn(1)*(c(1,1)+c(1,2)*F(2))/R6       
-      Vas=vas+fn(2)*(c(2,1)*F(1)+c(2,2)*F(3))/R7       
-      V=(Vsh+Vas)!*cm_H
-!     hehfpot=(Vsh+Vas)*cm_H
-      end subroutine potential
 
       function bfun()
         real(rk)::bfun
