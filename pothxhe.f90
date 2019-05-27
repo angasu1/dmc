@@ -132,10 +132,10 @@ module pothx
         integer(ik)::l
 
         abx=abs(x);x2=abx*abx;x3=abx*x2;x4=x2*x2;x5=x4*abx;x6=x4*x2;x7=x4*x3
-        suma(1)=1.0_rk+x+x2/fact(2)+x3/fact(3)+x4/fact(4)+x5/fact(5)+x6/fact(6)
+        suma(1)=1.0_rk+abx+x2/fact(2)+x3/fact(3)+x4/fact(4)+x5/fact(5)+x6/fact(6)
         suma(2)=suma(1)+x7/fact(7)
         suma=suma*dexp(x)      
-        f67=1.0_rk+suma      
+        f67=1.0_rk-suma      
 
 
         return

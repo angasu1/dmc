@@ -28,11 +28,17 @@
          case('ammonia') 
          !v=potw(x*ar2bo-xn(1),y*ar2bo-xn(2),z*ar2bo-xn(3),umb_ang)*har2cm
          !v=potw(x,y,z,umb_ang)  !OJO
-         case('hcl','hf','hfcl','hbr','hcn')
+         case('hcl','hf','hfcl','hbr')
          rvec=z-x
          r=dsqrt(dot_product(rvec,rvec))
          cthet=dot_product(rvec,y3)/r
-         call potential(V,r,cthet)
+         VV = V(r,cthet,indx)
+         case('hcn')                    
+         rvec=z-x                       
+         r=dsqrt(dot_product(rvec,rvec))
+         cthet=dot_product(rvec,y3)/r   
+         indx=4                         
+         VV= V(r,cthet,indx 
        end select
 
 
@@ -60,6 +66,7 @@
          case('hbr')
          call pars_assignment(3)
          case('hcn')
+         call pars_assignment(4)
        end select
 
 
