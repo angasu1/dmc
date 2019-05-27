@@ -42,6 +42,8 @@ Module global_variables
   integer(ik):: nw,state,node,nstps,nhe,nmon=1,nruns,norg,lmax,nmesh,istat
   integer(ik)::idum,jtot,npoin,nrad,counter=0
   character (len=80)::molname
+  real(rk)::potweig(20)=0.0_rk
+  integer(ik)::potterms(20)=1 !Terms of the potential that are going to be considered
 
 end Module global_variables
 
