@@ -2,6 +2,7 @@
       use types
       use global_variables   
       use pothx
+      use potinter
       use math_subroutines
       use hcldimpot
       Implicit none
@@ -32,7 +33,11 @@
          rvec=z-x
          r=dsqrt(dot_product(rvec,rvec))
          cthet=dot_product(rvec,y3)/r
+         if (ptyp.eq.1) then
          call potential(V,r,cthet)
+         else
+         call interpol(V,r,cthet)
+         endif        
        end select
 
 

@@ -49,7 +49,9 @@ Subroutine dmc_drv
        idum=-1234
        if (.not.fixran) call seed_cal(idum)
        call rotcons_calculation
+       if (ptyp.eq.1) then 
        call potparam
+       endif
        if (nmon.gt.1) call potdimparam
        A=A*frotmol
        B=B*frotmol

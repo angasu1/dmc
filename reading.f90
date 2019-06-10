@@ -118,7 +118,14 @@ Contains
                 molname=trim(args(2))
                 call check_name
                 allocate(coor(3,n_atxmol))
-                         
+        elseif (trim(args(1)).eq.'pt') then
+                call value(args(2),ptyp,ierror)   
+                if (ptyp.eq.2) then
+                open(file=trim(potfilesdir)//'polinomios'//trim(molname)//'.dat' &
+                        &,unit=1000,IOSTAT=ierror)
+                open(file=trim(potfilesdir)//'potlam'//trim(molname)//'.dat' &
+                        &,unit=1100,IOSTAT=ierror)
+                endif
         else
                 write(*,*) 'argument ',args(1),' not understood'
                 stop
@@ -148,7 +155,7 @@ Contains
    end subroutine par_reading
 
    subroutine dmc_par
-    integer(ik)::i
+    integer(ik)::i,j
 
     i=0       
     do
@@ -190,12 +197,33 @@ Contains
              call value(args(2),frotmol,ierror)    
           elseif (trim(args(1)).eq."fdc") then
              call value(args(2),frothe,ierror)    
+          elseif (trim(args(1)).eq."potterms") then
+                  do j=1,20
+                     call value(args(1+j),pottermsp(j),ierror)
+                     if (trim(args(j+1)).eq.'%') then
+                     pottermsp(j)=0
+                     exit 
+                     endif
+                     ntermspot=ntermspot+1
+                  enddo
+                     allocate (potterms(ntermspot))
+                     allocate (potweig(ntermspot))
+                     do j=1,ntermspot
+                        potterms(j)=pottermsp(j)
+                     enddo
+          elseif (trim(args(1)).eq."weights") then
+                  do j=1,ntermspot
+                     call value(args(1+j),potweig(j),ierror)
+                     if (ierror.ne.0) stop 'number of weights different than termpots'
+                  enddo
           else
              write(*,*) 'suboption ',trim(args(2)),' of DMC no recognized!!'       
              stop
           endif
 
     enddo
+
+
 
 
    return
