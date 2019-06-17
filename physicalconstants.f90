@@ -28,6 +28,12 @@ contains
          case('Br')
           att(i)%atnum=35
           att(i)%ma=79.904_rk*amu2au
+         case('C')                      
+          att(i)%atnum=6                
+          att(i)%ma=12.011_rk*amu2au    
+         case('N')                      
+          att(i)%atnum=7                
+          att(i)%ma=14.007_rk*amu2au 
          case default
            write(*,*) 'Atom ',atnom,'not in the list of mass assignments'
          end select
