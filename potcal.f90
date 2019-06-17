@@ -2,6 +2,7 @@
       use types
       use global_variables   
       use pothx
+      use potinter
       use math_subroutines
       use hcldimpot
       Implicit none
@@ -15,8 +16,9 @@
         !it returns the potential in cm-1
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!      
         real(rk),intent(in)::x(3),z(3),y1(3),y2(3),y3(3)
-        real(rk),intent(out)::V
-        real(rk)::rvec(3),r,cthet
+        real(rk),intent(out)::VV
+        real(rk)::rvec(3),r,cthet, Vsum
+        integer(ik)::indx
  
           
        Select case (trim(molname))
@@ -32,13 +34,40 @@
          rvec=z-x
          r=dsqrt(dot_product(rvec,rvec))
          cthet=dot_product(rvec,y3)/r
-         VV = V(r,cthet,indx)
-         case('hcn')                    
+         indx=1                         
+         if(ptyp.eq.1)then
+           VV = V(r,cthet,indx)
+         else if(ptyp.eq.2)then
+           call interpol(Vsum,r,cthet)
+           VV = Vsum
+         endif
+        case('hcn')
          rvec=z-x                       
          r=dsqrt(dot_product(rvec,rvec))
          cthet=dot_product(rvec,y3)/r   
          indx=4                         
-         VV= V(r,cthet,indx) 
+         if(ptyp.eq.1)then
+           VV = V(r,cthet,indx)
+         else if(ptyp.eq.2)then
+           call interpol(Vsum,r,cthet)
+           VV = Vsum
+         endif
+         
+!<<<<<<< HEAD
+!         VV = V(r,cthet,indx)
+!         case('hcn')                    
+!         rvec=z-x                       
+!         r=dsqrt(dot_product(rvec,rvec))
+!         cthet=dot_product(rvec,y3)/r   
+!         indx=4                         
+!         VV= V(r,cthet,indx) 
+!=======
+!         if (ptyp.eq.1) then
+!         call potential(V,r,cthet)
+!         else
+!         call interpol(V,r,cthet)
+!         endif        
+!>>>>>>> master
        end select
 
 

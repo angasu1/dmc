@@ -9,6 +9,7 @@ Module global_variables
   end type atom
   type(atom),allocatable::att(:)
   character(len=80) :: outdir='../results/'
+  character(len=80) :: potfilesdir='../src/potfiles/'
   character(len=80) :: title='notitle'
   real(rk),parameter:: navog=6.02214129e23_rk
   real(rk),parameter:: ev2har=3.6749325e-2_rk,har2ev=1._rk/ev2har
@@ -32,7 +33,6 @@ Module global_variables
   integer(ik)::simtyp,moltyp,n_at
   integer(ik)::n_atxmol
   logical::is=.false.,qgau=.false.
-  logical::potfit=.false.
   logical::jac=.false.
   logical::hhon=.true.,hmon=.true.,mmon=.true.
   real(rk)::requil=0.0_rk,frotmol=1.0_rk,frothe=1.0_rk
@@ -42,6 +42,16 @@ Module global_variables
   integer(ik):: nw,state,node,nstps,nhe,nmon=1,nruns,norg,lmax,nmesh,istat
   integer(ik)::idum,jtot,npoin,nrad,counter=0
   character (len=80)::molname
+  integer(ik)::pottermsp(20)=1 !Terms of the potential that are going to be considered
+  real(rk),allocatable::potweig(:)
+  integer(ik),allocatable::potterms(:) !Terms of the potential that are going to be considered
+  integer(ik)::ptyp=1,ntermspot=0
+  integer(ik), parameter                 :: maxLinea=10000, nColumna = 22
+  integer(ik)                            :: nLinea
+  real(rk), dimension(:,:), allocatable  :: vlamda, plam
+  character(4)                           :: temp
+
+
 
 end Module global_variables
 
