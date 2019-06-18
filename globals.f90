@@ -48,7 +48,7 @@ Module global_variables
   integer(ik)::ptyp=1,ntermspot=0
   integer(ik), parameter                 :: maxLinea=10000, nColumna = 22
   integer(ik)                            :: nLinea
-  real(rk), dimension(:,:), allocatable  :: vlamda, plam
+  real(rk), dimension(:,:), allocatable  :: vlam, plam
   character(4)                           :: temp
 
 

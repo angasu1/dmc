@@ -15,7 +15,7 @@ module potinter
        integer(ik)                     :: i, j
        real(rk)                        :: th1, th2, r1, r2 !, th0, r0, vsum
        real(rk), allocatable           :: pl(:), vl(:)
-       real(rk), allocatable           :: vlam(:,:), plam(:,:)
+       !real(rk), allocatable           :: vlam(:,:), plam(:,:)
        nLinea = 1001                    
        allocate(pl(nColumna-1))         
        allocate(vl(nColumna-1))         

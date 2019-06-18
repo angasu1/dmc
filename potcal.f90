@@ -9,7 +9,7 @@
 
       Contains
 
-      subroutine potcalc(y1,y2,y3,x,z,cthet,V)
+      subroutine potcalc(y1,y2,y3,x,z,cthet,VV)
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!      
         !Subroutine that calculates the potential for different molecules
         !it gets the cartesian coordinates for the centerofmass-He distance in A. and
@@ -17,7 +17,7 @@
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!      
         real(rk),intent(in)::x(3),z(3),y1(3),y2(3),y3(3)
         real(rk),intent(out)::VV
-        real(rk)::rvec(3),r,cthet, Vsum
+        real(rk)::rvec(3),r,cthet,Vsum
         integer(ik)::indx
  
           
@@ -33,11 +33,12 @@
          case('hcl','hf','hfcl','hbr')
          rvec=z-x
          r=dsqrt(dot_product(rvec,rvec))
-         cthet=dot_product(rvec,y3)/r
+         cthet=dot_product(rvec,y3)/r ! si cthet es el cos(theta) entonces devo convertirlo a solo tener theta porque en mis listas por cada theta tengo valor
          indx=1                         
          if(ptyp.eq.1)then
            VV = V(r,cthet,indx)
          else if(ptyp.eq.2)then
+           cthet = acos(dot_product(rvec,y3)/r)
            call interpol(Vsum,r,cthet)
            VV = Vsum
          endif
@@ -49,6 +50,7 @@
          if(ptyp.eq.1)then
            VV = V(r,cthet,indx)
          else if(ptyp.eq.2)then
+           cthet = acos(dot_product(rvec,y3)/r)
            call interpol(Vsum,r,cthet)
            VV = Vsum
          endif

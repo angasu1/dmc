@@ -126,22 +126,27 @@ Contains
                 open(file=trim(potfilesdir)//'potlam'//trim(molname)//'.dat' &
                         &,unit=1100,IOSTAT=ierror)
                 ! determinar el número de datos en filas
-                  nLinea = 0                              
-                  do k = 1, maxLinea                      
-                     read(1000,*,iostat=ierror) temp      
-                     if (nLinea > maxLinea) stop "Archivo demasiado grande"
-                     nLinea = nLinea + 1                  
-                  end do ! k = 1, maxLinea                
-                  rewind(1000) ! (linea del caset)         
+                  nLinea = 1001                              
+                  !do k = 1, maxLinea                      
+                  !   read(1000,*,iostat=ierror) temp      
+                  !   if (nLinea > maxLinea) stop "Archivo demasiado grande"
+                  !   nLinea = nLinea + 1                  
+                  !write(*,*) nLinea 
+                  !end do ! k = 1, maxLinea                
+                  !rewind(1000) ! (linea del caset)         
                                         
-                 ! Colocar memoria para la matriz        
+                 !Colocar memoria para la matriz        
                  allocate(plam(nLinea, nColumna))        
-                 allocate(vlamda(nLinea, nColumna))      
+                 allocate(vlam(nLinea, nColumna))      
                                         
                  ! Leer la matriz                        
                  do k = 1, nLinea                        
                      read(1000,13) (plam(k,j),j = 1, nColumna)
-                     read(1100,13) (vlamda(k,j),j = 1, nColumna)
+                     !write(*,*) 'plam', (plam(k,j),j=1,nColumna)
+                     !read*
+                     read(1100,13) (vlam(k,j),j = 1, nColumna)
+                     !write(*,*) 'vlam', (vlam(k,j),j=1,nColumna)
+                     !read*
                  end do ! i = 1, nLinea 
 13 format(*(f28.16,2x))
                 endif
