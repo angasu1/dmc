@@ -38,7 +38,7 @@
          if(ptyp.eq.1)then
            VV = V(r,cthet,indx)
          else if(ptyp.eq.2)then
-           cthet = acos(dot_product(rvec,y3)/r)
+         !  cthet = acos(dot_product(rvec,y3)/r)
            call interpol(Vsum,r,cthet)
            VV = Vsum
          endif
@@ -50,7 +50,7 @@
          if(ptyp.eq.1)then
            VV = V(r,cthet,indx)
          else if(ptyp.eq.2)then
-           cthet = acos(dot_product(rvec,y3)/r)
+          ! cthet = acos(dot_product(rvec,y3)/r)
            call interpol(Vsum,r,cthet)
            VV = Vsum
          endif
