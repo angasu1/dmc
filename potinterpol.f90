@@ -8,7 +8,6 @@ module potinter
    implicit none
 
    Contains
-!Subroutine interpolacion(r0,th0,vlam, plam, nLinea, vsum)
    subroutine interpol(Vsum,r,cthet)
        real(rk),intent(out)            :: Vsum
        real(rk),intent(in)             :: r,cthet
@@ -25,15 +24,12 @@ module potinter
        linear = 1 + int((1000._rk*(r-2._rk))/33._rk)
        !lineath = 1 + int((1000._rk*(cthet))/pi) 
        lineath = 1 - nint(500._rk*(cthet-1._rk)) 
-       !write(*,*) linear, lineath
        
 
        th1 = plam(lineath,1)                
        th2 = plam(lineath+1,1)              
-       !write(*,*) "puntos de interpol",cthet, th1, th2
        r1 = vlam(linear,1)                  
        r2 = vlam(linear+1,1)                
-       !write(*,*) "puntos de interpol", r,r1,r2
 
        ! Asegura estar en la linea correcta 
        if(abs(cthet-th1)>(1._rk/1000._rk).or.abs(r-r1)>(33._rk/1000._rk))then
@@ -44,16 +40,12 @@ module potinter
        ! encuentra valores nuevos de vlam y plam
        do j = 2, nColumna                   
            pl(j-1) = plam(lineath,j) + ((cthet-th1)/(th2-th1))*(plam(lineath+1,j) - plam(lineath,j))
-           !write(*,*) pl(j-1)              
        end do !j = 2, nColumna              
                                         
        do j = 2, nColumna                   
            vl(j-1) = vlam(linear,j) + ((r-r1)/(r2-r1))*(vlam(linear+1,j) - vlam(linear,j))
-           !write(*,*) vl(j-1)              
        end do !j = 2, nColumna 
        vsum = sum(vl*pl)                
-       !write(*,*) "vsum", vsum         
-       !read *                          
                                         
                                         
    10 format(*(f28.16,2x))               
