@@ -46,8 +46,8 @@ Module global_variables
   real(rk),allocatable::potweig(:)
   integer(ik),allocatable::potterms(:) !Terms of the potential that are going to be considered
   integer(ik)::ptyp=1,ntermspot=0
-  integer(ik), parameter                 :: maxLinea=10000, nColumna = 22
-  integer(ik)                            :: nLinea
+  integer(ik), parameter                 :: maxLinea=10000
+  integer(ik)                            :: nLinea, nColumna = 22_ik
   real(rk), dimension(:,:), allocatable  :: vlam, plam
   character(4)                           :: temp
 
