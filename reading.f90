@@ -126,14 +126,15 @@ Contains
                 open(file=trim(potfilesdir)//'potlam'//trim(molname)//'.dat' &
                         &,unit=1100,IOSTAT=ierror)
                 ! determinar el número de datos en filas
-                  nLinea = 1001                              
-                  !do k = 1, maxLinea                      
-                  !   read(1000,*,iostat=ierror) temp      
-                  !   if (nLinea > maxLinea) stop "Archivo demasiado grande"
-                  !   nLinea = nLinea + 1                  
-                  !write(*,*) nLinea 
-                  !end do ! k = 1, maxLinea                
-                  !rewind(1000) ! (linea del caset)         
+                  !nLinea = 1001                              
+                  nLinea = 0                              
+                  do k = 1, maxLinea                      
+                     read(1000,*,iostat=ierror) temp      
+                     if (ierror /= 0) exit               
+                     if (nLinea > maxLinea) stop "Archivo demasiado grande"
+                     nLinea = nLinea + 1                  
+                  end do ! i = 1, maxLinea                
+                  rewind(1000) ! (linea del caset)  
                                         
                  !Colocar memoria para la matriz        
                  allocate(plam(nLinea, nColumna))        
@@ -148,7 +149,7 @@ Contains
                      !write(*,*) 'vlam', (vlam(k,j),j=1,nColumna)
                      !read*
                  end do ! i = 1, nLinea 
-13 format(*(f28.16,2x))
+                 13 format(*(f28.16,2x))
                 endif
         else
                 write(*,*) 'argument ',args(1),' not understood'
