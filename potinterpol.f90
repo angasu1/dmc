@@ -22,7 +22,7 @@ module potinter
       !allocate(vl(nColumna-1))                
                                  
        !interpolación, encontrar los vlam, plam y sacar el potencial, para nuevos r0 y th0
-       linear = 1 + int((1000._rk*(r-2._rk))/33._rk)
+       linear = 1 + int((1000._rk*(r-2._rk))/38._rk)
        !lineath = 1 + int((1000._rk*(cthet))/pi) 
        lineath = 1 - nint(500._rk*(cthet-1._rk)) 
        
@@ -33,13 +33,13 @@ module potinter
        r2 = vlam(linear+1,1)                
 
        ! Asegura estar en la linea correcta 
-       if(abs(cthet-cth1)>(1._rk/1000._rk).or.abs(r-r1)>(33._rk/1000._rk))then
+       if(abs(cthet-cth1)>(1._rk/1000._rk).or.abs(r-r1)>(38._rk/1000._rk))then
            write(*,*) "no estas en la línea correcta"
            stop                                 
        end if         
 
-       if (lineath+1.gt.1001) stop 'fuera de rango theta'
-       if (linear+1.gt.1001) stop 'fuera de rango r'
+       if (lineath.gt.1001) stop 'fuera de rango theta'
+       if (linear.gt.1001) stop 'fuera de rango r'
 
        ! encuentra valores nuevos de vlam y plam
        vsum=0
