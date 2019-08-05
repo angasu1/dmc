@@ -38,7 +38,7 @@ Module global_variables
   real(rk)::requil=0.0_rk,frotmol=1.0_rk,frothe=1.0_rk
   real(rk)::rfb,rfbmax,rfbmin,drfb,dtau,rmax,rmin,umb_ang,xn(3),initd=0.0_rk
   real(rk)::diffcHe,diffchered,diffccm,A,B,C,dhe,mHe,dmassred,mtot
-  real(rk)::factorrotx=1.0_rk,factorroty=1.0_rk,factorrotz=1.0_rk
+  real(rk)::factorrotx=1.0_rk,factorroty=1.0_rk,factorrotz=1.0_rk,rmaxpot,rexit=30.0_rk
   integer(ik):: nw,state,node,nstps,nhe,nmon=1,nruns,norg,lmax,nmesh,istat
   integer(ik)::idum,jtot,npoin,nrad,counter=0
   character (len=80)::molname
@@ -46,7 +46,6 @@ Module global_variables
   real(rk),allocatable::potweig(:)
   integer(ik),allocatable::potterms(:) !Terms of the potential that are going to be considered
   integer(ik)::ptyp=1,ntermspot=0
-  integer(ik), parameter                 :: maxLinea=10000
   integer(ik)                            :: nLinea, nColumna = 22_ik
   real(rk), dimension(:,:), allocatable  :: vlam, plam
   character(4)                           :: temp
