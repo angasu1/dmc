@@ -125,31 +125,7 @@ Contains
                         &,unit=1000,IOSTAT=ierror)
                 open(file=trim(potfilesdir)//'potlam'//trim(molname)//'.dat' &
                         &,unit=1100,IOSTAT=ierror)
-                ! determinar el número de datos en filas
-                  !nLinea = 1001                              
-                  nLinea = 0                              
-                  do k = 1, maxLinea                      
-                     read(1000,*,iostat=ierror) temp      
-                     if (ierror /= 0) exit               
-                     if (nLinea > maxLinea) stop "Archivo demasiado grande"
-                     nLinea = nLinea + 1                  
-                  end do ! i = 1, maxLinea                
-                  rewind(1000) ! (linea del caset)  
-                                        
-                 !Colocar memoria para la matriz        
-                 allocate(plam(nLinea, nColumna))        
-                 allocate(vlam(nLinea, nColumna))      
-                                        
-                 ! Leer la matriz                        
-                 do k = 1, nLinea                        
-                     read(1000,13) (plam(k,j),j = 1, nColumna)
-                     !write(*,*) 'plam', (plam(k,j),j=1,nColumna)
-                     !read*
-                     read(1100,13) (vlam(k,j),j = 1, nColumna)
-                     !write(*,*) 'vlam', (vlam(k,j),j=1,nColumna)
-                     !read*
-                 end do ! i = 1, nLinea 
-                 13 format(*(f28.16,2x))
+                call read_pot_files
                 endif
         else
                 write(*,*) 'argument ',args(1),' not understood'
@@ -401,6 +377,39 @@ Contains
        end Select
 
       end subroutine results_file_opening
+
+      subroutine read_pot_files
+           integer(ik)::k,j
+
+                ! determinar el número de datos en filas
+                  !nLinea = 1001                              
+                  nLinea = 0                              
+                  do                       
+                     read(1000,*,iostat=ierror) temp      
+                     if (ierror /= 0) exit               
+                     nLinea = nLinea + 1                  
+                  end do 
+
+                  rewind(1000) 
+                                        
+                 !Colocar memoria para la matriz        
+                 allocate(plam(nLinea, nColumna))        
+                 allocate(vlam(nLinea, nColumna))      
+                                        
+                 ! Leer la matriz                        
+                 do k = 1, nLinea                        
+                     read(1000,1300) (plam(k,j),j = 1, nColumna)
+                     read(1100,1300) (vlam(k,j),j = 1, nColumna)
+                 end do ! i = 1, nLinea 
+
+                 rmaxpot=vlam(k-1,1)
+
+
+
+1300  format(*(f28.16,2x))
+
+     end subroutine read_pot_files
+                 
 
  End Module input_values
 
