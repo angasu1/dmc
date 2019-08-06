@@ -121,7 +121,7 @@ Contains
         elseif (trim(args(1)).eq.'pt') then
                 call value(args(2),ptyp,ierror)   
                 if (ptyp.eq.2) then
-                open(file=trim(potfilesdir)//'polinomios'//trim(molname)//'.dat' &
+               open(file=trim(potfilesdir)//'polinomios'//trim(molname)//'.dat' &
                         &,unit=1000,IOSTAT=ierror)
                 open(file=trim(potfilesdir)//'potlam'//trim(molname)//'.dat' &
                         &,unit=1100,IOSTAT=ierror)

@@ -50,7 +50,7 @@ Module global_variables
   integer(ik)                            :: nLinea, nColumna = 22_ik
   real(rk), dimension(:,:), allocatable  :: vlam, plam
   character(4)                           :: temp
-
+  !real(rk)                            :: rmax, chtetmax, rmin, cthetmin
 
 
 end Module global_variables
