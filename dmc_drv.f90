@@ -58,7 +58,7 @@ Subroutine dmc_drv
        C=C*frotmol
        diffccm=diffccm*frothe
 
-       write(*,*) A*har2cm,B*har2cm,diffccm*har2cm
+       write(*,*) 'rotcons',A*har2cm,B*har2cm,diffccm*har2cm
 
         
 
@@ -613,7 +613,8 @@ End Subroutine dmc_drv
         integer::ind,j
          
          if (state.eq.1) then
-         fonda(j,ind)=dcos(dacos(ctha)+dacos(cthb))
+        !fonda(j,ind)=dcos(dacos(ctha)+dacos(cthb))
+         fonda(j,ind)=ctha
          endif
 
 
