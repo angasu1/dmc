@@ -382,7 +382,6 @@ Contains
            integer(ik)::k,j
 
                 ! determinar el número de datos en filas
-                  !nLinea = 1001                              
                   nLinea = 0                              
                   do                       
                      read(1000,*,iostat=ierror) temp      
