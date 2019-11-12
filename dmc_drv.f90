@@ -11,7 +11,7 @@ Module dmc_cal
  integer,parameter::delta_N_max=10000
  real(rk),allocatable:: y1(:,:,:),y2(:,:,:),y3(:,:,:)
  real(rk),allocatable:: zcor(:,:,:),xcor(:,:,:)
- real(rk),allocatable::Er(:),pot(:),eloc(:),erme_wn(:)
+ real(rk),allocatable::Er(:),pot(:),eloc(:),erme_wn(:), pothelios(:)
  real(rk),allocatable::signo(:),fonda(:,:),alphahe(:),betahe(:)
  real(rk)::ermedia,ermedia2
  real(rk),parameter::cc=20000d0,aa=0.5d0
@@ -39,7 +39,7 @@ Subroutine dmc_drv
 
    allocate(y1(3,nw+delta_N_max,nmon),y2(3,nw+delta_N_max,nmon),y3(3,nw+delta_N_max,nmon))
    allocate(zcor(3,nw+delta_N_max,nhe),xcor(3,nw+delta_N_max,nmon))
-   allocate(Er(0:nstps),pot(nw+delta_N_max),eloc(nw+delta_N_max))
+   allocate(Er(0:nstps),pot(nw+delta_N_max),eloc(nw+delta_N_max),pothelios(nw+delta_N_max))
    allocate(signo(nw+delta_N_max),fonda(nw+delta_N_max,0:1))
    allocate(alphahe(nhe),betahe(nhe),erme_wn(nruns))
 
@@ -139,7 +139,7 @@ enddo main_loop
 End Subroutine dmc_drv
 
       Subroutine initial_conditions(icorrida)
-      real (rk)   :: rr,u,phiinicial,rot,rmin,rmax
+      real (rk)   :: rr,u,phiinicial,rot,rmin,rmax, thetainicial
       real (rk)   :: phi,theta,psi,rrot(3),rhe(3,nw+delta_N_max,nhe)
       integer :: jhe,jmon,j,icorrida,icont
  
@@ -161,31 +161,50 @@ End Subroutine dmc_drv
 
       rot=1.0d0 !poner a cero si se quiere iniciar alineado con el lab
         do jmon=1,nmon
-         y1(:,j,jmon)=ei
-         y2(:,j,jmon)=ej
-         y3(:,j,jmon)=ek
-         phiinicial = ran2(idum)*2.d0*pi*rot
-        !phiinicial=0.0_rk!OJO
-       !Se rota la molecula con respecto al ejex molecular un angulo phiinicial 
-      call rotacion(y1(1,j,jmon),Y1(2,j,jmon),Y1(3,j,jmon),y3(1,j,jmon),y3(2,j,jmon),y3(3,j,jmon),phiinicial) 
-      call rotacion(y1(1,j,jmon),Y1(2,j,jmon),Y1(3,j,jmon),y2(1,j,jmon),y2(2,j,jmon),y2(3,j,jmon),phiinicial) 
+           y1(:,j,jmon)=ei
+           y2(:,j,jmon)=ej
+           y3(:,j,jmon)=ek
+           phiinicial = ran2(idum)*2.d0*pi*rot
+           thetainicial = ran2(idum)*pi/2.d0 ! va de 0 a pi/2 y de pi/2 a pi
+
+           !-----------------------------------Funcionan----------------------------------------------------------------
+           y3(1,j,jmon) = dsin(thetainicial)*dcos(phiinicial)
+           y3(2,j,jmon) = dsin(phiinicial)*dsin(thetainicial)
+           y3(3,j,jmon) = dcos(thetainicial) 
+                                        
+           y2(1,j,jmon) = 0.0d0        
+           y2(2,j,jmon) =  y3(3,j,jmon)/sqrt((y3(3,j,jmon)**2 + y3(2,j,jmon)**2))
+           y2(3,j,jmon) = -y3(2,j,jmon)/sqrt(y3(2,j,jmon)**2 + y3(3,j,jmon)**2) 
+                                        
+           y1(1,j,jmon) = sqrt(1.0d0/(1.0d0 + (y3(1,j,jmon)**2*(y2(2,j,jmon)**2 + y2(3,j,jmon)**2)&
+                                               &/(y3(2,j,jmon)*y2(3,j,jmon) - y3(3,j,jmon)*y2(2,j,jmon))**2)))
+           y1(2,j,jmon) = y1(1,j,jmon)*y3(1,j,jmon)*y2(3,j,jmon)/(y3(3,j,jmon)*y2(2,j,jmon) - y3(2,j,jmon)*y2(3,j,jmon))
+           y1(3,j,jmon) = -y1(1,j,jmon)*y3(1,j,jmon)*y2(2,j,jmon)/(y3(3,j,jmon)*y2(2,j,jmon) - y3(2,j,jmon)*y2(3,j,jmon))
+           !--------------------------------------------------------------------------------------------------------------
+
+         
+         
+           !phiinicial=0.0_rk!OJO
+           !Se rota la molecula con respecto al ejex molecular un angulo phiinicial 
+           !call rotacion(y1(1,j,jmon),Y1(2,j,jmon),Y1(3,j,jmon),y3(1,j,jmon),y3(2,j,jmon),y3(3,j,jmon),phiinicial) 
+           !call rotacion(y1(1,j,jmon),Y1(2,j,jmon),Y1(3,j,jmon),y2(1,j,jmon),y2(2,j,jmon),y2(3,j,jmon),phiinicial) 
         
-        phiinicial = ran2(idum)*2.d0*pi*rot
-        !phiinicial=0.0_rk!OJO
-       !se rota la molecula con respecto al ejey molecular un angulo phiinicial 
-      call rotacion(y2(1,j,jmon),Y2(2,j,jmon),Y2(3,j,jmon),y3(1,j,jmon),y3(2,j,jmon),y3(3,j,jmon),phiinicial) 
-      call rotacion(y2(1,j,jmon),Y2(2,j,jmon),Y2(3,j,jmon),y1(1,j,jmon),y1(2,j,jmon),y1(3,j,jmon),phiinicial) 
+           !phiinicial = ran2(idum)*2.d0*pi*rot
+           !phiinicial=0.0_rk!OJO
+           !se rota la molecula con respecto al ejey molecular un angulo phiinicial 
+           !call rotacion(y2(1,j,jmon),Y2(2,j,jmon),Y2(3,j,jmon),y3(1,j,jmon),y3(2,j,jmon),y3(3,j,jmon),phiinicial) 
+           !call rotacion(y2(1,j,jmon),Y2(2,j,jmon),Y2(3,j,jmon),y1(1,j,jmon),y1(2,j,jmon),y1(3,j,jmon),phiinicial) 
         
 
-      if (moltyp.gt.2) then !Rotate for a non linear molecule
-       phiinicial = ran2(idum)*2.d0*pi*rot 
-       !se rota la molecula con respecto al ejez molecular un angulo phiinicial 
-       call rotacion(y3(1,j,jmon),Y3(2,j,jmon),Y3(3,j,jmon),y1(1,j,jmon),y1(2,j,jmon),y1(3,j,jmon),phiinicial) 
-       call rotacion(y3(1,j,jmon),Y3(2,j,jmon),Y3(3,j,jmon),y2(1,j,jmon),y2(2,j,jmon),y2(3,j,jmon),phiinicial)
-      endif
+           if (moltyp.gt.2) then !Rotate for a non linear molecule
+              phiinicial = ran2(idum)*2.d0*pi*rot 
+              !se rota la molecula con respecto al ejez molecular un angulo phiinicial 
+              call rotacion(y3(1,j,jmon),Y3(2,j,jmon),Y3(3,j,jmon),y1(1,j,jmon),y1(2,j,jmon),y1(3,j,jmon),phiinicial) 
+              call rotacion(y3(1,j,jmon),Y3(2,j,jmon),Y3(3,j,jmon),y2(1,j,jmon),y2(2,j,jmon),y2(3,j,jmon),phiinicial)
+           endif
 
-      call euler(y1(:,j,jmon),y2(:,j,jmon),y3(:,j,jmon),phi,theta,psi)
-         enddo
+           call euler(y1(:,j,jmon),y2(:,j,jmon),y3(:,j,jmon),phi,theta,psi)
+       enddo
  !      
         
 !       !Tercero. Se asignan los valores de las posiciones iniciales del helio aleatoriamente
@@ -365,8 +384,9 @@ End Subroutine dmc_drv
               enddo
             enddo
           endif
-
-      pot(j)=pot(j)+sumpot
+       pothelios(j) = sumpot
+       pot(j)=pot(j)+sumpot
+       write(900,*) pothelios(j)
 
 
 
