@@ -374,6 +374,12 @@ Contains
           open (unit=400,file=trim(indir)//'/idist'//trim(nombre))
           open (unit=500,file=trim(indir)//'/config.xyz')
           open (unit=600,file=trim(indir)//'/output.dat')
+          open (unit=650,file=trim(indir)//'/last_config_y1y2y3.dat')
+          open (unit=660,file=trim(indir)//'/last_config_xmon.dat')
+          open (unit=670,file=trim(indir)//'/last_config_zhe.dat')
+          open (unit=700,file=trim(indir)//'/histr'//trim(nombre))
+          open (unit=800,file=trim(indir)//'/histct'//trim(nombre))
+          open (unit=900,file=trim(indir)//'/Emedia_he.dat')
        end Select
 
       end subroutine results_file_opening

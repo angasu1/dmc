@@ -841,6 +841,75 @@ end subroutine calculate_at_number
 
     return
    end subroutine histogram        
+   
+   subroutine histogrampot(ndiv)
+    !Given a vector of dimension ndim, it creates and histogram
+    !taking ndivisions from the smallest to the biggest. The result
+    !is stored on vector hist
+    integer(ik)::ndim,ndiv,i,j,k,istat
+    real(rk),allocatable::vec(:,:)
+    real(rk)::deltax,maxv(2),minv(2),a,b,delta
+    real(rk)::cor(2,ndiv),hist(2,ndiv)
+    real(rk)::pi=dacos(-1.0_rk)
+
+     rewind(250)
+     i=0
+     do
+       read(250,*,IOSTAT=istat) a,b
+       if (istat.ne.0) exit
+       i=i+1
+     enddo
+     ndim=i
+
+     allocate(vec(2,ndim))
+     rewind(250)
+     do i=1,ndim
+       read(250,*,IOSTAT=istat) vec(:,i)
+       if (istat.ne.0) exit
+     enddo
+
+    maxv(1)=maxval(vec(1,:))
+   ! maxv(2)=maxval(vec(2,:))
+    maxv(2)= 180.0_rk
+    minv(1)=minval(vec(1,:))
+    !minv(2)=minval(vec(2,:))
+    minv(2)= 0.0_rk
+
+    hist=0.0_rk
+   do i=1,2
+
+       delta=(maxv(i)-minv(i))
+       deltax=(maxv(i)-minv(i))/ndiv
+
+
+       do j=1,ndiv
+           !cor(i,j)=minv(i)+(j-0.5_rk)*deltax
+           cor(i,j)=minv(i)+(j-1)*deltax
+       enddo
+
+       do j=1,ndim
+           if (abs(maxv(i)-vec(i,j)).lt.tol) then
+              k=ndiv
+           else
+              k=int(ndiv*((vec(i,j)-minv(i))/delta))+1
+              if (k.gt.ndiv) stop 'error calculating histogram'
+           endif
+           hist(i,k)=hist(i,k)+1
+       enddo
+
+   enddo
+
+     do j=1,ndiv
+       write(700,1000) cor(1,j),hist(1,j), cor(1,j)**2*hist(1,j)**2
+       write(800,1000) cor(2,j),hist(2,j)**2*dsin(cor(2,j)*pi/180._rk),hist(2,j)**2, hist(2,j)
+     enddo
+
+
+1000 format (*(F30.6))
+
+    return
+   end subroutine histogrampot
+
 
              subroutine rotz(rij,th)
                real(rk)::rij(3),th,Amat(3,3),rijt(3)

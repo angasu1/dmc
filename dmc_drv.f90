@@ -11,7 +11,7 @@ Module dmc_cal
  integer,parameter::delta_N_max=10000
  real(rk),allocatable:: y1(:,:,:),y2(:,:,:),y3(:,:,:)
  real(rk),allocatable:: zcor(:,:,:),xcor(:,:,:)
- real(rk),allocatable::Er(:),pot(:),eloc(:),erme_wn(:), pothelios(:)
+ real(rk),allocatable::Er(:),pot(:),eloc(:),erme_wn(:), potaverage(:,:)
  real(rk),allocatable::signo(:),fonda(:,:),alphahe(:),betahe(:)
  real(rk)::ermedia,ermedia2
  real(rk),parameter::cc=20000d0,aa=0.5d0
@@ -39,7 +39,7 @@ Subroutine dmc_drv
 
    allocate(y1(3,nw+delta_N_max,nmon),y2(3,nw+delta_N_max,nmon),y3(3,nw+delta_N_max,nmon))
    allocate(zcor(3,nw+delta_N_max,nhe),xcor(3,nw+delta_N_max,nmon))
-   allocate(Er(0:nstps),pot(nw+delta_N_max),eloc(nw+delta_N_max),pothelios(nw+delta_N_max))
+   allocate(Er(0:nstps),pot(nw+delta_N_max),eloc(nw+delta_N_max),potaverage(2,nw+delta_N_max))
    allocate(signo(nw+delta_N_max),fonda(nw+delta_N_max,0:1))
    allocate(alphahe(nhe),betahe(nhe),erme_wn(nruns))
 
@@ -118,6 +118,8 @@ steps:  do npaso=1,nstps
 !       !Se llama a la subrutina que efectúa los procesos de vida o muerte
         call branch(npaso,N,icorrida) 
         enddo steps
+
+           if (icorrida.eq.1) call histogrampot(ndiv)
 
 
 !       !Se escriben los valores de la energía media final en cada corrida
@@ -331,9 +333,10 @@ End Subroutine dmc_drv
         real (rk) :: phig,thetag,rg,xvec(3),rad,potdim      
         real (rk),dimension(3)::rrot,rrotb,rvec
         real(rk):: rhe(3,nw+delta_N_max,nhe)
-        integer(ik) :: j,jhe,jmon,kmon,khe,icontr,npaso
+        integer(ik) :: i,j,jhe,jmon,kmon,khe,icontr,npaso
         integer(ik),intent(in)::N 
         real(rk)::xcmass(3),cth,ctha,cthb,phi
+        real(rk):: Emol, EHeHe, Etot
 
         
 
@@ -351,7 +354,7 @@ End Subroutine dmc_drv
              enddo
           enddo
         endif
-
+        potaverage(1,j) = sumpot
         pot(j)=sumpot
 
           !Dimer Potential(in case there are more than one molecule)
@@ -375,18 +378,19 @@ End Subroutine dmc_drv
             do jhe=1,nhe-1
               do khe=jhe+1,nhe
 
-          rhehe=dsqrt(dot_product(zcor(:,j,jhe)-zcor(:,j,khe),zcor(:,j,jhe)-zcor(:,j,khe)))
-
-          call pothehe(vvhehe,rhehe)
-        
-          sumpot=sumpot+vvhehe
+                 rhehe=dsqrt(dot_product(zcor(:,j,jhe)-zcor(:,j,khe),zcor(:,j,jhe)-zcor(:,j,khe)))
+                 call pothehe(vvhehe,rhehe)
+                 sumpot=sumpot+vvhehe
 
               enddo
             enddo
           endif
-       pothelios(j) = sumpot
-       pot(j)=pot(j)+sumpot
-       write(900,*) pothelios(j)
+          potaverage(2,j) = sumpot
+          pot(j)=pot(j)+sumpot
+
+       !pothelios(j) = sumpot
+       !pot(j)=pot(j)+sumpot
+       !write(900,*) pothelios(j)
 
 
 
@@ -397,11 +401,15 @@ End Subroutine dmc_drv
         call wvfunct(ctha,cthb,phi,j,mod(npaso,2))
         signo(j)=fonda(j,1)*fonda(j,0)
       endif
-
-
-     
      Enddo 
-      
+
+     if(npaso.gt.min(20000,nstps/2))then
+       Emol = sum(potaverage(1,:))/N
+       EHeHe = sum(potaverage(2,:))/N
+       Etot = Emol + EHeHe
+       write(900,*) Emol, EHeHe, Etot, (EHeHe/Etot)*100
+     end if!(npaso.gt.min(20000,nstps/2))then
+
         return 
         End Subroutine potential_calculation 
 
@@ -417,10 +425,19 @@ End Subroutine dmc_drv
       
       avgxx=0.0_rk
 
-      do j=1,N    
-          
-                !Warning:For the moment this is only implemented for a maximum of
-                !two monomers
+       do j=1,N
+           do k=1,nhe
+              zzz=zcor(:,j,k)
+              xxx=xcor(:,j,1)
+              yy3=y3(:,j,1)
+
+              rrvec=zzz-xxx
+              rrr=dsqrt(dot_product(rrvec,rrvec))
+              ct1=dot_product(rrvec,yy3)/rrr
+              write(250,1000) rrr,dacos(ct1)*180.0_rk/pi
+           enddo
+           !Warning:For the moment this is only implemented for a maximum of
+           !two monomers
 
                    ri=y3(:,j,1)          
                    if (nmon.eq.2) then
@@ -437,6 +454,14 @@ End Subroutine dmc_drv
 
           call cartesian_coords_conv(ri,rj,rij,rad,xx,xxmon,zhe,rhe,thhe)
 
+          !-------lo agrego yo----------
+          write(650,1000) y1(:,j,1), y2(:,j,1), y3(:,j,1)!, xxmon, zhe 
+          write(660,1000) xxmon
+          write(670,1000) zhe
+          !---------------------------- 
+
+       enddo
+1000 format(*(F18.10,3x))
 
                 
          !avgxx=avgxx+xx
@@ -450,15 +475,9 @@ End Subroutine dmc_drv
            ! write(250,1000) rhe
            ! write(250,1000) thhe
             !call write_xyz(500,2*nmon+nhe,att%nom,xx*bo2ar) 
-1000 format(*(F10.4,'&'))        
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
-
-
-
-
-      enddo
            !avgxx=avgxx/dfloat(N)
             call write_xyz(500,2*nmon+nhe,att%nom,xx)
 
