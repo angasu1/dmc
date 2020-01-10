@@ -205,7 +205,8 @@ Contains
                      pottermsp(j)=0
                      exit 
                      endif
-                     ntermspot=ntermspot+1
+                     !ntermspot=ntermspot+1
+                     ntermspot = pottermsp(j)
                   enddo
                      allocate (potterms(ntermspot))
                      allocate (potweig(ntermspot))
