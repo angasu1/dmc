@@ -2,23 +2,21 @@
       use types
       use global_variables   
       use pothx
-      use potinter
       use math_subroutines
       use hcldimpot
       Implicit none
 
       Contains
 
-      subroutine potcalc(y1,y2,y3,x,z,cthet,VV)
+      subroutine potcalc(y1,y2,y3,x,z,cthet,V)
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!      
         !Subroutine that calculates the potential for different molecules
         !it gets the cartesian coordinates for the centerofmass-He distance in A. and
         !it returns the potential in cm-1
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!      
         real(rk),intent(in)::x(3),z(3),y1(3),y2(3),y3(3)
-        real(rk),intent(out)::VV
-        real(rk)::rvec(3),r,cthet,Vsum 
-        integer(ik)::indx  
+        real(rk),intent(out)::V
+        real(rk)::rvec(3),r,cthet
  
           
        Select case (trim(molname))
@@ -30,31 +28,11 @@
          case('ammonia') 
          !v=potw(x*ar2bo-xn(1),y*ar2bo-xn(2),z*ar2bo-xn(3),umb_ang)*har2cm
          !v=potw(x,y,z,umb_ang)  !OJO
-         case('hcn') 
-         rvec=z-x                       
+         case('hcl','hf','hbr','hcn')
+         rvec=z-x
          r=dsqrt(dot_product(rvec,rvec))
-         cthet=dot_product(rvec,y3)/r   
-         indx=4                         
-         if(ptyp.eq.1)then              
-           VV = V(r,cthet,indx)
-
-         else if(ptyp.eq.2)then         
-           !cthet=dacos(cthet)  
-           call interpol(Vsum,r,cthet)  
-           VV = Vsum                    
-         endif                    
-         case('hcl','hf','hfcl','hbr')
-         rvec=z-x                       
-         r=dsqrt(dot_product(rvec,rvec))
-         cthet=dot_product(rvec,y3)/r ! si cthet es el cos(theta) entonces devo convertirlo a solo tener theta porque en mis listas por cada theta tengo valor
-         indx=1                         
-         if(ptyp.eq.1)then              
-           VV = V(r,cthet,indx)         
-         else if(ptyp.eq.2)then         
-           !cthet=dacos(cthet)  
-           call interpol(Vsum,r,cthet)  
-           VV = Vsum                    
-         endif  
+         cthet=dot_product(rvec,y3)/r
+         call potential(V,r,cthet)
        end select
 
 
@@ -75,14 +53,11 @@
          !v=potw(x,y,z,umb_ang)  !OJO
          case('hf')
          call pars_assignment(1)
-         case('hfcl')
-         call pars_assignment(1)
          case('hcl')
          call pars_assignment(2)
          case('hbr')
          call pars_assignment(3)
          case('hcn')
-         call pars_assignment(4)
        end select
 
 
@@ -101,8 +76,6 @@
          !v=potw(x*ar2bo-xn(1),y*ar2bo-xn(2),z*ar2bo-xn(3),umb_ang)*har2cm
          !v=potw(x,y,z,umb_ang)  !OJO
          case('hf')
-         case('hfcl')
-         call potkass
          case('hcl')
          call potkass
          case('hbr')
@@ -191,9 +164,8 @@
           call hf2pot(1.7374_rk,1.7374_rk,rad,deg(dacos(ctheta1c)),deg(dacos(ctheta2c)),deg(phic),potdim)
          !call hf2pot(1.7445d0, 1.7404d0, 5.144d0, 9.00d0, 64.14d0, 180.00d0,potdim)
          !write(*,*) 'atila',potdim
-         case('hfcl')
-         call pothcl2(rad*bo2ar,ctheta1c,ctheta2c,phic,potdim)
          case('hcl')
+           !ctheta1=dcos(9.0_rk*pi/180.0_rk);ctheta2=dcos(89.0_rk*pi/180.0_rk);phi=180.0_rk     
          call pothcl2(rad*bo2ar,ctheta1c,ctheta2c,phic,potdim)
         !call pothcl2(rad,ctheta1,ctheta2,phi,potdim)
            !write(*,*) 'rad',rad,ctheta1,ctheta2,phi,potdim
@@ -382,49 +354,24 @@ end subroutine angs
            real(rk)::phrot,throt,fac1,fac2,rhe(nmon,nhe),thhe(nmon,nhe)
            real(rk)::transl1(3),transl2(3)
            integer(ik)::i,j
-           character(len=2)::atip(2*nmon+nhe)
-           real(rk)::th1com(3),th2com(3),taucom(3),Rcom(3),rhecom(3,2,nhe),alhecom(3,2,nhe)
-           real(rk)::rijcom(3),ricom(3),rjcom(3),xmoncom(3,2),zhecom(3,nhe)
-           real(rk)::ph1,ph2,ph
+           character(len=2)::atip(5)
 
           !write(*,*) 'cartesian'
            
 
-           fac2=-(att(1)%ma*requil*ar2bo/mtot)
-           fac1=fac2+requil*ar2bo
+           fac1=-(att(1)%ma*requil*ar2bo/mtot)
+           fac2=fac1+requil*ar2bo
 
 
            if (nmon.eq.2) then
             !!!!!!!!!!!!!!!!!DEBUGGING
-            atip(1:4)=(/'H ','Cl','H ','Cl'/)
-            do j=1,nhe
-                    atip(4+j)='He'
-            enddo
-           !xx(:,1)=(xxmon(:,1)+fac1*ri)*bo2ar
-           !xx(:,2)=(xxmon(:,1)+fac2*ri)*bo2ar
-           !xx(:,3)=(xxmon(:,2)+fac1*rj)*bo2ar
-           !xx(:,4)=(xxmon(:,2)+fac2*rj)*bo2ar
-           !xx(:,5)=zhe(:,1)*bo2ar
-           !call write_xyz(238,5,atip,xx)
-
-
-            !Calculos comprobacion 1
-           !ricom=ri
-           !rjcom=rj
-           !xmoncom(:,1)=xx(:,1)*ar2bo-fac1*ricom
-           !xmoncom(:,2)=xx(:,3)*ar2bo-fac1*rjcom
-           !rijcom=xmoncom(:,2)-xmoncom(:,1)
-           !rcom(1)=norm(rijcom)
-           !zhecom=zhe(:,1)
-           !th1com(1)=dacos(dot_product(ricom,rijcom)/rcom(1))*180.0_rk/pi
-           !th2com(1)=dacos(dot_product(rjcom,rijcom)/rcom(1))*180.0_rk/pi
-           !rhecom(1,1)=norm(zhecom-xmoncom(:,1))
-           !rhecom(1,2)=norm(zhecom-xmoncom(:,2))
-           !alhecom(1,1)=dacos(dot_product(zhecom-xmoncom(:,1),ricom)/rhecom(1,1))*180_rk/pi
-           !alhecom(1,2)=dacos(dot_product(zhecom-xmoncom(:,2),rjcom)/rhecom(1,2))*180_rk/pi
-           !write(239,1000) rcom(1),th1com(1),th2com(1),rhecom(1,1),rhecom(1,2),alhecom(1,1),alhecom(1,2)
-1000     format(*(F18.10,3x))            
-
+            atip=(/'H ','Cl','H ','Cl','He'/)
+            xx(:,1)=(xxmon(:,1)+fac1*ri)*bo2ar
+            xx(:,2)=(xxmon(:,1)+fac2*ri)*bo2ar
+            xx(:,3)=(xxmon(:,2)+fac1*rj)*bo2ar
+            xx(:,4)=(xxmon(:,2)+fac2*rj)*bo2ar
+            xx(:,5)=zhe(:,1)*bo2ar
+            call write_xyz(238,5,atip,xx)
 
             !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -434,43 +381,24 @@ end subroutine angs
 
 
            !Translation of all the coordinates
-           transl1=xxmon(:,1)
+           transl1=xxmon(:,1)-rij/2.0_rk
+           write(*,*) 'transl1',transl1
            xxmon(:,1)=xxmon(:,1)-transl1
            xxmon(:,2)=xxmon(:,2)-transl1
            do j=1,nhe
            zhe(:,j)=zhe(:,j)-transl1
            enddo
-           !!!!!!!!!!!!!!DEbbuging
             xx(:,1)=(xxmon(:,1)+fac1*ri)*bo2ar
             xx(:,2)=(xxmon(:,1)+fac2*ri)*bo2ar
             xx(:,3)=(xxmon(:,2)+fac1*rj)*bo2ar
             xx(:,4)=(xxmon(:,2)+fac2*rj)*bo2ar
-            do j=1,nhe
-            xx(:,4+j)=zhe(:,j)*bo2ar
-            enddo
-          ! call write_xyz(238,5,atip,xx)
+            xx(:,5)=zhe(:,1)*bo2ar
+            call write_xyz(238,5,atip,xx)
 
-            !Calculos comprobacion 2
-            ricom=ri
-            rjcom=rj
-            xmoncom(:,1)=xx(:,1)*ar2bo-fac1*ricom
-            xmoncom(:,2)=xx(:,3)*ar2bo-fac1*rjcom
-            rijcom=xmoncom(:,2)-xmoncom(:,1)
-            rcom(2)=norm(rijcom)
-            th1com(2)=dacos(dot_product(ricom,rijcom)/rcom(2))*180.0_rk/pi
-            th2com(2)=dacos(dot_product(rjcom,rijcom)/rcom(2))*180.0_rk/pi
-            do j=1,nhe
-            zhecom(:,j)=zhe(:,j)
-            rhecom(2,1,j)=norm(zhecom(:,j)-xmoncom(:,1))
-            rhecom(2,2,j)=norm(zhecom(:,j)-xmoncom(:,2))
-            alhecom(2,1,j)=dacos(dot_product(zhecom(:,j)-xmoncom(:,1),&
-                           &ricom)/rhecom(2,1,j))*180_rk/pi
-            alhecom(2,2,j)=dacos(dot_product(zhecom(:,j)-xmoncom(:,2),&
-                           &rjcom)/rhecom(2,2,j))*180_rk/pi
-            enddo
-          ! write(239,1000) rcom(2),th1com(2),th2com(2),rhecom(2,1),rhecom(2,2),alhecom(2,1),alhecom(2,2)
-
-
+           write(*,*) 'translation',xxmon(:,1)
+           write(*,*) 'translation',xxmon(:,2)
+           write(*,*) 'translation',zhe(:,1)
+           stop
 
            !Rotation to the system
             phrot=datan2(-rij(2),rij(1))
@@ -478,89 +406,47 @@ end subroutine angs
             throt=pi/2.0_rk-throt
 
             !write(*,*) 'rij ant',rij
-            !write(*,*) 'rij ant',xxmon(:,1)
-            !write(*,*) 'rij ant',xxmon(:,2)
              call rotz(rij,-phrot)
              call rotz(ri,-phrot)
              call rotz(rj,-phrot)
-             call rotz(xxmon(:,1),-phrot)
-             call rotz(xxmon(:,2),-phrot)
-             do j=1,nhe
-             call rotz(zhe(:,j),-phrot)
-             enddo
-            !write(*,*) 'rij ant2',rij
-            !write(*,*) 'rij ant2',xxmon(:,1)
-            !write(*,*) 'rij ant2',xxmon(:,2)
+            !write(*,*) 'rij desp',rij
              call roty(rij,throt)
              call roty(ri,throt)
              call roty(rj,throt)
-             call roty(xxmon(:,1),throt)
-             call roty(xxmon(:,2),throt)
-             do j=1,nhe
-             call roty(zhe(:,j),throt)
-             enddo
-            !write(*,*) 'rij ant3',rij
-            !write(*,*) 'rij ant3',xxmon(:,1)
-            !write(*,*) 'rij ant3',xxmon(:,2)
+            !write(*,*) 'rij desp2',rij
             !stop
 
-           !do j=1,3
-           !xx(j,1)=(xxmon(j,1)+fac1*ri(j))*bo2ar
-           !xx(j,2)=(xxmon(j,1)+fac2*ri(j))*bo2ar
-           !xx(j,3)=(xxmon(j,2)+fac1*rj(j))*bo2ar
-           !xx(j,4)=(xxmon(j,2)+fac2*rj(j))*bo2ar
-           !xx(j,5)=zhe(j,1)*bo2ar
-           !enddo
-           ph1=datan2(ri(2),ri(3))
-           ph2=datan2(rj(2),rj(3))
-           ph=abs(ph1-ph2)
-            xx(:,1)=(xxmon(:,1)+fac1*ri)*bo2ar
-            xx(:,2)=(xxmon(:,1)+fac2*ri)*bo2ar
-            xx(:,3)=(xxmon(:,2)+fac1*rj)*bo2ar
-            xx(:,4)=(xxmon(:,2)+fac2*rj)*bo2ar
-            do j=1,nhe
-            xx(:,4+j)=zhe(:,j)*bo2ar
-            enddo
-          ! call write_xyz(238,5,atip,xx)
 
 
 
+     !Calculation of cartesian coords
+       xx(:,1)=fac2*ri-rij/2.0_rk
+       xx(:,2)=fac1*ri-rij/2.0_rk
+       xx(:,3)=fac2*rj+rij/2.0_rk
+       xx(:,4)=fac1*rj+rij/2.0_rk
+       xcm1=-rij/2.0_rk
+       xcm2=rij/2.0_rk
+       transl1=xxmon(:,1)-xcm1
+       transl2=xxmon(:,2)-xcm2
 
-            !Calculos de comprobacion 3
-            ricom=ri
-            rjcom=rj
-            xmoncom(:,1)=xx(:,1)*ar2bo-fac1*ricom
-            xmoncom(:,2)=xx(:,3)*ar2bo-fac1*rjcom
-            rijcom=xmoncom(:,2)-xmoncom(:,1)
-            rcom(3)=norm(rijcom)
-            th1com(3)=dacos(dot_product(ricom,rijcom)/rcom(3))*180.0_rk/pi
-            th2com(3)=dacos(dot_product(rjcom,rijcom)/rcom(3))*180.0_rk/pi
-            do j=1,nhe
-            zhecom(:,j)=zhe(:,j)
-            rhecom(3,1,j)=norm(zhecom(:,j)-xmoncom(:,1))
-            rhecom(3,2,j)=norm(zhecom(:,j)-xmoncom(:,2))
-            alhecom(3,1,j)=dacos(dot_product(zhecom(:,j)-xmoncom(:,1),&
-                           &ricom)/rhecom(3,1,j))*180_rk/pi
-            alhecom(3,2,j)=dacos(dot_product(zhecom(:,j)-xmoncom(:,2),&
-                           &rjcom)/rhecom(3,2,j))*180_rk/pi
-            enddo
+       write(*,*) 'transl',transl1
+       write(*,*) 'transl',transl2
+       stop
 
-            write(250,1000) rcom(3),th1com(3),th2com(3),ph,&
-                  &(rhecom(3,1,j),rhecom(3,2,j),alhecom(3,1,j),alhecom(3,2,j),j=1,nhe)
-
-
-      !xcm1=-rij/2.0_rk
-      !xcm2=rij/2.0_rk
+       do i=1,nhe
+       enddo        
 
 
        else
-
        xx(:,1)=fac2*ri
        xx(:,2)=fac1*ri
        xcm1=xxmon(:,1)
 
        do i=1,nhe
         xx(:,2+i)=zhe(:,i)-xcm1       
+       !write(*,*) 'xhe',xx(:,2+i)
+       !write(*,*) 'xhe',zhe(:,i)
+       !write(*,*) 'xhe',xcm1
         rhe(1,i)=norm(xx(:,2+i))
         thhe(1,i)=dacos(dot_product(ri,xx(:,2+i))/rhe(1,i))
        enddo        
